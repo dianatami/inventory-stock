@@ -18,10 +18,13 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
+    'name',
+    'username',
+    'email',
+    'password',
+    'role',
+    'is_active',
+];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -41,4 +44,32 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    
+public function stockTransactions()
+{
+    return $this->hasMany(StockTransaction::class);
+}
+
+public function stockMutations()
+{
+    return $this->hasMany(StockMutation::class);
+}
+
+protected static function booted(): void
+{
+    static::created(function (User $user) {
+        if (empty($user->username)) {
+            $user->username = 'omprof'
+                . str_pad((string) $user->id, 4, '0', STR_PAD_LEFT);
+
+            $user->saveQuietly();
+        }
+    });
+}
+
+public function supplier()
+{
+    return $this->belongsTo(Supplier::class);
+}
 }
