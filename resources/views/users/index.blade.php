@@ -122,6 +122,7 @@
                         <th>Pengguna</th>
                         <th>Email</th>
                         <th>Role</th>
+                        <th>Outlet</th>
                         <th>Status</th>
                         <th>Aksi</th>
                     </tr>
@@ -154,6 +155,8 @@
                                 </span>
                             </td>
 
+                            <td>{{ $user->outlet?->name ?? '-' }}</td>
+
                             <td>
                                 @if ($user->is_active)
                                     <span class="user-status-badge active">
@@ -169,14 +172,16 @@
                             <td>
                                 <div class="user-action-buttons">
 
-                                    <a href="{{ route('users.edit', $user) }}"
-                                       class="user-action-btn edit"
-                                       title="Edit pengguna"
-                                       aria-label="Edit pengguna">
-                                        ✎
-                                    </a>
+                                    @if (auth()->user()->role === 'Manager' || $user->role === 'User Outlet')
+                                        <a href="{{ route('users.edit', $user) }}"
+                                           class="user-action-btn edit"
+                                           title="Edit pengguna"
+                                           aria-label="Edit pengguna">
+                                            ✎
+                                        </a>
+                                    @endif
 
-                                    @if ($user->id !== auth()->id())
+                                    @if ($user->id !== auth()->id() && (auth()->user()->role === 'Manager' || $user->role === 'User Outlet'))
                                         <form
                                             action="{{ route('users.toggle-status', $user) }}"
                                             method="POST"

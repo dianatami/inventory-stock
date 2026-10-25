@@ -78,20 +78,22 @@
                     >
                 </div>
 
-                <div class="form-group full-width">
-                    <label for="password">Password Baru</label>
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        placeholder="Kosongkan jika tidak ingin mengubah password"
-                        autocomplete="new-password"
-                        minlength="8"
-                    >
-                    <small>
-                        Minimal 8 karakter. Password lama tetap digunakan jika dikosongkan.
-                    </small>
-                </div>
+                @if (auth()->user()->role === 'Manager')
+                    <div class="form-group full-width">
+                        <label for="password">Password Baru</label>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Kosongkan jika tidak ingin mengubah password"
+                            autocomplete="new-password"
+                            minlength="8"
+                        >
+                        <small>
+                            Minimal 8 karakter. Password lama tetap digunakan jika dikosongkan.
+                        </small>
+                    </div>
+                @endif
 
                 <div class="form-group full-width">
                     <label for="role">Role *</label>
@@ -105,6 +107,20 @@
                             </option>
                         @endforeach
                     </select>
+                </div>
+
+                <div class="form-group full-width" id="outlet-field">
+                    <label for="outlet_id">Outlet *</label>
+                    <select name="outlet_id" id="outlet_id">
+                        <option value="">Pilih outlet untuk akun ini</option>
+                        @foreach ($outlets as $outlet)
+                            <option value="{{ $outlet->id }}"
+                                @selected(old('outlet_id', $user->outlet_id) == $outlet->id)>
+                                {{ $outlet->name }} ({{ $outlet->code }})
+                            </option>
+                        @endforeach
+                    </select>
+                    <small>Setiap outlet hanya dapat terhubung ke satu akun User Outlet.</small>
                 </div>
 
             </div>
@@ -139,4 +155,17 @@
     </div>
 
 </div>
+<script>
+    const roleField = document.getElementById('role');
+    const outletField = document.getElementById('outlet-field');
+    const outletSelect = document.getElementById('outlet_id');
+    const updateOutletField = () => {
+        const isOutletUser = roleField.value === 'User Outlet';
+        outletField.hidden = !isOutletUser;
+        outletSelect.required = isOutletUser;
+        if (!isOutletUser) outletSelect.value = '';
+    };
+    roleField.addEventListener('change', updateOutletField);
+    updateOutletField();
+</script>
 @endsection

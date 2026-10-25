@@ -43,7 +43,7 @@
                 <th>No.</th>
                 <th>Nama Supplier</th>
                 <th>Nama Perusahaan</th>
-                <th>Telepon</th>
+                <th>No. WhatsApp</th>
                 <th>Email</th>
                 <th>Aksi</th>
             </tr>
@@ -55,7 +55,7 @@
                     <td>{{ $suppliers->firstItem() + $loop->index }}</td>
                     <td>{{ $supplier->name }}</td>
                     <td>{{ $supplier->company_name ?? '-' }}</td>
-                    <td>{{ $supplier->phone ?? '-' }}</td>
+                    <td>{{ $supplier->whatsapp ?? '-' }}</td>
                     <td>{{ $supplier->email ?? '-' }}</td>
                     <td>
                         <div class="action-buttons">

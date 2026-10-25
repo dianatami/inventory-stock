@@ -12,6 +12,8 @@ class StockMutation extends Model
     protected $fillable = [
         'product_id',
         'user_id',
+        'outlet_id',
+        'outlet_order_item_id',
         'quantity',
         'from_location',
         'to_location',
@@ -33,5 +35,10 @@ class StockMutation extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function outletOrderItem()
+    {
+        return $this->belongsTo(OutletOrderItem::class);
     }
 }

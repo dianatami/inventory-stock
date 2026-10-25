@@ -58,20 +58,6 @@
         </div>
 
         <div class="form-group">
-            <label for="phone">Nomor Telepon</label>
-            <input
-                type="text"
-                id="phone"
-                name="phone"
-                value="{{ old('phone') }}"
-                placeholder="Contoh: 081234567890"
-            >
-            @error('phone')
-                <small class="error-message">{{ $message }}</small>
-            @enderror
-        </div>
-
-        <div class="form-group">
             <label for="whatsapp">Nomor WhatsApp</label>
             <input
                 type="text"

@@ -12,30 +12,33 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    
-public function login(Request $request)
-{
-    $credentials = $request->validate([
-        'username' => ['required', 'string'],
-        'password' => ['required', 'string'],
-    ]);
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'username' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ]);
 
-    if (Auth::attempt([
-        'username' => $credentials['username'],
-        'password' => $credentials['password'],
-        'is_active' => true,
-    ])) {
-        $request->session()->regenerate();
+        if (Auth::attempt([
+            'username' => $credentials['username'],
+            'password' => $credentials['password'],
+            'is_active' => true,
+        ])) {
+            $request->session()->regenerate();
 
-        return redirect()->intended('/dashboard');
+            $destination = $request->user()->role === 'User Outlet'
+                ? route('outlet.dashboard')
+                : route('dashboard');
+
+            return redirect()->to($destination);
+        }
+
+        return back()
+            ->withErrors([
+                'username' => 'Username atau password salah, atau akun tidak aktif.',
+            ])
+            ->onlyInput('username');
     }
-
-    return back()
-        ->withErrors([
-            'username' => 'Username atau password salah, atau akun tidak aktif.',
-        ])
-        ->onlyInput('username');
-}
 
     public function logout(Request $request)
     {

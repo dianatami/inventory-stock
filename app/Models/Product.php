@@ -46,4 +46,19 @@ class Product extends Model
     {
         return $this->hasMany(StockMutation::class);
     }
+
+    public function outletStocks()
+    {
+        return $this->hasMany(OutletStock::class);
+    }
+
+    public function outletOrderItems()
+    {
+        return $this->hasMany(OutletOrderItem::class);
+    }
+
+    public function outletStocktakeItems()
+    {
+        return $this->hasMany(OutletStocktakeItem::class);
+    }
 }

@@ -31,6 +31,11 @@
            class="report-tab {{ $tab === 'out' ? 'active' : '' }}">
             ↑ Stok Keluar
         </a>
+
+        <a href="{{ route('reports.stock', ['tab' => 'adjustment', 'date' => $date]) }}"
+           class="report-tab {{ $tab === 'adjustment' ? 'active' : '' }}">
+            ± Penyesuaian
+        </a>
     </div>
 
     {{-- RINGKASAN LAPORAN HARIAN --}}
@@ -40,9 +45,9 @@
             <div class="stat-card">
                 <div class="stat-icon">▤</div>
                 <div>
-                    <p>Total Transaksi {{ $tab === 'in' ? 'Masuk' : 'Keluar' }}</p>
+                    <p>Total Transaksi {{ $tab === 'in' ? 'Masuk' : ($tab === 'out' ? 'Keluar' : 'Penyesuaian') }}</p>
                     <h2>
-                        {{ number_format($tab === 'in' ? $dailyInCount : $dailyOutCount, 0, ',', '.') }}
+                        {{ number_format($tab === 'in' ? $dailyInCount : ($tab === 'out' ? $dailyOutCount : $dailyAdjustmentCount), 0, ',', '.') }}
                     </h2>
                 </div>
             </div>
@@ -50,9 +55,9 @@
             <div class="stat-card">
                 <div class="stat-icon">{{ $tab === 'in' ? '↓' : '↑' }}</div>
                 <div>
-                    <p>Total Kuantitas {{ $tab === 'in' ? 'Masuk' : 'Keluar' }}</p>
+                    <p>Total Kuantitas {{ $tab === 'in' ? 'Masuk' : ($tab === 'out' ? 'Keluar' : 'Disesuaikan') }}</p>
                     <h2>
-                        {{ number_format($tab === 'in' ? $dailyIn : $dailyOut, 0, ',', '.') }}
+                        {{ number_format($tab === 'in' ? $dailyIn : ($tab === 'out' ? $dailyOut : $dailyAdjustment), 0, ',', '.') }}
                     </h2>
                 </div>
             </div>
@@ -60,7 +65,7 @@
             <div class="stat-card">
                 <div class="stat-icon">⇄</div>
                 <div>
-                    <p>Net Flow Hari Ini</p>
+                    <p>{{ $tab === 'adjustment' ? 'Stok Masuk − Keluar' : 'Net Flow Hari Ini' }}</p>
                     <h2>{{ number_format($dailyIn - $dailyOut, 0, ',', '.') }}</h2>
                 </div>
             </div>
@@ -215,7 +220,7 @@
             <div class="page-header">
                 <div>
                     <h2>
-                        Laporan Stok {{ $tab === 'in' ? 'Masuk' : 'Keluar' }}
+                        Laporan Stok {{ $tab === 'in' ? 'Masuk' : ($tab === 'out' ? 'Keluar' : 'Penyesuaian') }}
                     </h2>
                     <p>
                         Tanggal:
@@ -266,8 +271,8 @@
                                 </td>
 
                                 <td>
-                                    <span class="{{ $tab === 'in' ? 'quantity-in' : 'quantity-out' }}">
-                                        {{ $tab === 'in' ? '+' : '-' }}{{ number_format($transaction->quantity, 0, ',', '.') }}
+                                    <span class="{{ $tab === 'in' || ($tab === 'adjustment' && $transaction->stock_after > $transaction->stock_before) ? 'quantity-in' : 'quantity-out' }}">
+                                        {{ $tab === 'adjustment' ? ($transaction->stock_after > $transaction->stock_before ? '+' : '−') : ($tab === 'in' ? '+' : '−') }}{{ number_format($transaction->quantity, 0, ',', '.') }}
                                         {{ $transaction->product->unit ?? '' }}
                                     </span>
                                 </td>

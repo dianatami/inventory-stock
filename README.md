@@ -7,6 +7,21 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Sistem Inventori TPN
+
+Aplikasi ini menyediakan dashboard gudang dan portal User Outlet dengan pemisahan stok gudang dan stok outlet. Database aplikasi menggunakan `db_inventori_distribusi`; database lama tidak dihapus.
+
+### Menjalankan aplikasi
+
+1. Siapkan MySQL dan sesuaikan kredensial koneksi pada `.env`.
+2. Jalankan `php artisan migrate --seed` untuk membuat skema dan akun Manager awal.
+3. Jalankan `npm install` lalu `npm run build`, kemudian mulai aplikasi menggunakan `php artisan serve`.
+4. Masuk sebagai Manager, buat outlet pada menu **Data Outlet**, lalu buat akun **User Outlet** dari **Manajemen Pengguna** dan hubungkan ke outlet.
+
+Alur pesanan, pengiriman, validasi penerimaan, retur, stok opname, dan laporan barang terpakai tersedia pada menu masing-masing. Pengiriman mengurangi stok gudang, sedangkan validasi penerimaan menambah stok outlet.
+
+Ubah password awal Manager segera setelah login pertama.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

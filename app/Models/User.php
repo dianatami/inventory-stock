@@ -18,13 +18,14 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-    'name',
-    'username',
-    'email',
-    'password',
-    'role',
-    'is_active',
-];
+        'name',
+        'username',
+        'email',
+        'password',
+        'role',
+        'is_active',
+        'outlet_id',
+    ];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -45,31 +46,40 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    
-public function stockTransactions()
-{
-    return $this->hasMany(StockTransaction::class);
-}
+    public function stockTransactions()
+    {
+        return $this->hasMany(StockTransaction::class);
+    }
 
-public function stockMutations()
-{
-    return $this->hasMany(StockMutation::class);
-}
+    public function stockMutations()
+    {
+        return $this->hasMany(StockMutation::class);
+    }
 
-protected static function booted(): void
-{
-    static::created(function (User $user) {
-        if (empty($user->username)) {
-            $user->username = 'omprof'
-                . str_pad((string) $user->id, 4, '0', STR_PAD_LEFT);
+    protected static function booted(): void
+    {
+        static::created(function (User $user) {
+            if (empty($user->username)) {
+                $user->username = 'omprof'
+                    .str_pad((string) $user->id, 4, '0', STR_PAD_LEFT);
 
-            $user->saveQuietly();
-        }
-    });
-}
+                $user->saveQuietly();
+            }
+        });
+    }
 
-public function supplier()
-{
-    return $this->belongsTo(Supplier::class);
-}
+    public function outlet()
+    {
+        return $this->belongsTo(Outlet::class);
+    }
+
+    public function outletOrders()
+    {
+        return $this->hasMany(OutletOrder::class);
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
+    }
 }

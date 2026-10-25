@@ -17,6 +17,7 @@ class StockTransaction extends Model
         'stock_before',
         'stock_after',
         'reference_number',
+        'destination',
         'transaction_date',
         'notes',
     ];
