@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\StockTransaction;
+use App\Services\LowStockNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -67,7 +68,7 @@ class StockTransactionController extends Controller
         );
     }
 
-    public function store(Request $request)
+    public function store(Request $request, LowStockNotificationService $notifications)
     {
         $validated = $request->validate([
             'product_id' => [
@@ -154,6 +155,8 @@ class StockTransactionController extends Controller
                 'notes' => $validated['notes'] ?? null,
             ]);
         });
+
+        $notifications->sync();
 
         return redirect()
             ->route(
@@ -253,17 +256,17 @@ class StockTransactionController extends Controller
         return view('stock_transactions.create', compact('products', 'type'));
     }
 
-    public function storeStockIn(Request $request)
+    public function storeStockIn(Request $request, LowStockNotificationService $notifications)
     {
         $request->merge(['type' => 'in']);
 
-        return $this->store($request);
+        return $this->store($request, $notifications);
     }
 
-    public function storeStockOut(Request $request)
+    public function storeStockOut(Request $request, LowStockNotificationService $notifications)
     {
         $request->merge(['type' => 'out']);
 
-        return $this->store($request);
+        return $this->store($request, $notifications);
     }
 }

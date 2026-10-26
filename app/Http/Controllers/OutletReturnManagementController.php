@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Outlet;
 use App\Models\OutletReturn;
-use App\Models\OutletStock;
-use App\Models\OutletStockTransaction;
 use App\Models\Product;
 use App\Models\StockTransaction;
+use App\Models\WorkflowStatusHistory;
+use App\Services\LowStockNotificationService;
+use App\Services\SystemNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -16,11 +16,24 @@ class OutletReturnManagementController extends Controller
 {
     public function index(Request $request)
     {
-        $query = OutletReturn::with(['outlet', 'order', 'items.product'])
+        $query = OutletReturn::with([
+            'outlet',
+            'order',
+            'dispatcher',
+            'items.product',
+            'statusHistory.user',
+        ])
             ->latest();
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
+        }
+        if ($request->filled('search')) {
+            $search = $request->string('search')->toString();
+            $query->where(function ($builder) use ($search) {
+                $builder->where('return_number', 'like', "%{$search}%")
+                    ->orWhereHas('outlet', fn ($outlet) => $outlet->where('name', 'like', "%{$search}%"));
+            });
         }
 
         $returns = $query->paginate(15)->withQueryString();
@@ -28,7 +41,11 @@ class OutletReturnManagementController extends Controller
         return view('warehouse.returns.index', compact('returns'));
     }
 
-    public function review(Request $request, OutletReturn $return)
+    public function review(
+        Request $request,
+        OutletReturn $return,
+        SystemNotificationService $systemNotifications
+    )
     {
         abort_unless(in_array($request->user()->role, ['Manager', 'Kepala Logistik'], true), 403);
         $validated = $request->validate([
@@ -50,13 +67,39 @@ class OutletReturnManagementController extends Controller
                 'reviewed_at' => now(),
                 'decision_notes' => $validated['decision_notes'] ?? null,
             ]);
+            WorkflowStatusHistory::record(
+                $locked,
+                'requested',
+                $locked->status,
+                $request->user()->id,
+                $validated['decision_notes'] ?? null,
+                (int) $locked->items()->sum('requested_quantity')
+            );
         });
+
+        $return->loadMissing('outlet');
+        $approved = $validated['decision'] === 'approve';
+        $systemNotifications->record(
+            'return-review:'.$return->id,
+            'return',
+            'Retur '.$return->return_number.($approved ? ' disetujui' : ' ditolak'),
+            'Pengajuan retur dari '.$return->outlet->name.' '
+                .($approved ? 'disetujui dan dapat dikirim kembali ke gudang.' : 'ditolak.'),
+            ['Manager', 'Admin Prolog'],
+            'return',
+            $return->id,
+            $return->return_number
+        );
 
         return back()->with('success', 'Keputusan retur berhasil disimpan.');
     }
 
-    public function verify(Request $request, OutletReturn $return)
-    {
+    public function verify(
+        Request $request,
+        OutletReturn $return,
+        LowStockNotificationService $notifications,
+        SystemNotificationService $systemNotifications
+    ) {
         abort_unless(in_array($request->user()->role, ['Manager', 'Admin Prolog'], true), 403);
         $validated = $request->validate([
             'verified' => ['required', 'array'],
@@ -68,13 +111,12 @@ class OutletReturnManagementController extends Controller
                 ->whereKey($return->id)
                 ->lockForUpdate()
                 ->firstOrFail();
-            if ($return->status !== 'approved') {
+            if ($return->status !== 'dispatched') {
                 throw ValidationException::withMessages([
-                    'verified' => 'Barang retur hanya dapat diverifikasi setelah disetujui.',
+                    'verified' => 'Barang retur hanya dapat diverifikasi setelah dikirim outlet.',
                 ]);
             }
 
-            Outlet::whereKey($return->outlet_id)->lockForUpdate()->firstOrFail();
             foreach ($return->items as $item) {
                 if (! array_key_exists($item->id, $validated['verified'])) {
                     throw ValidationException::withMessages([
@@ -83,9 +125,9 @@ class OutletReturnManagementController extends Controller
                 }
 
                 $quantity = (int) $validated['verified'][$item->id];
-                if ($quantity > $item->requested_quantity) {
+                if ($quantity > $item->shipped_quantity) {
                     throw ValidationException::withMessages([
-                        'verified' => 'Jumlah diterima gudang tidak boleh melebihi pengajuan retur.',
+                        'verified' => 'Jumlah layak yang diterima gudang tidak boleh melebihi jumlah retur yang dikirim.',
                     ]);
                 }
                 if ($quantity === 0) {
@@ -95,17 +137,6 @@ class OutletReturnManagementController extends Controller
                     continue;
                 }
 
-                $stock = OutletStock::where('outlet_id', $return->outlet_id)
-                    ->where('product_id', $item->product_id)
-                    ->lockForUpdate()
-                    ->first();
-                if (! $stock || $stock->quantity < $quantity) {
-                    throw ValidationException::withMessages([
-                        'verified' => 'Stok outlet tidak cukup untuk memproses retur '
-                            .$item->product->name.'.',
-                    ]);
-                }
-
                 $product = Product::whereKey($item->product_id)->lockForUpdate()->firstOrFail();
                 if ($product->stock + $quantity > 4294967295) {
                     throw ValidationException::withMessages([
@@ -113,25 +144,8 @@ class OutletReturnManagementController extends Controller
                     ]);
                 }
 
-                $outletBefore = $stock->quantity;
-                $stock->quantity -= $quantity;
-                $stock->save();
                 $item->verified_quantity = $quantity;
                 $item->save();
-
-                OutletStockTransaction::create([
-                    'outlet_id' => $return->outlet_id,
-                    'product_id' => $item->product_id,
-                    'user_id' => $request->user()->id,
-                    'type' => 'return',
-                    'quantity' => $quantity,
-                    'stock_before' => $outletBefore,
-                    'stock_after' => $stock->quantity,
-                    'source_type' => 'return_item',
-                    'source_id' => $item->id,
-                    'transaction_date' => now(),
-                    'notes' => 'Retur '.$return->return_number,
-                ]);
 
                 $warehouseBefore = $product->stock;
                 $product->stock += $quantity;
@@ -155,8 +169,29 @@ class OutletReturnManagementController extends Controller
                 'verified_by' => $request->user()->id,
                 'verified_at' => now(),
             ]);
+            WorkflowStatusHistory::record(
+                $return,
+                'dispatched',
+                'verified',
+                $request->user()->id,
+                'Gudang mencatat barang layak diterima.',
+                (int) $return->items()->sum('verified_quantity')
+            );
         });
 
-        return back()->with('success', 'Barang retur telah diverifikasi. Stok outlet dan gudang diperbarui.');
+        $notifications->sync();
+        $return->loadMissing('outlet');
+        $systemNotifications->record(
+            'return-verified:'.$return->id,
+            'return',
+            'Retur '.$return->return_number.' telah diverifikasi',
+            'Barang retur dari '.$return->outlet->name.' telah diperiksa dan stok gudang diperbarui.',
+            ['Manager', 'Admin Prolog'],
+            'return',
+            $return->id,
+            $return->return_number
+        );
+
+        return back()->with('success', 'Retur diverifikasi. Stok gudang bertambah sesuai barang yang layak jual.');
     }
 }

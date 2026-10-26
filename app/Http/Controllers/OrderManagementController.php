@@ -10,6 +10,9 @@ use App\Models\OutletStockTransaction;
 use App\Models\Product;
 use App\Models\StockMutation;
 use App\Models\StockTransaction;
+use App\Models\WorkflowStatusHistory;
+use App\Services\LowStockNotificationService;
+use App\Services\SystemNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +24,13 @@ class OrderManagementController extends Controller
         $query = OutletOrder::with(['outlet', 'user', 'items.product', 'receipt'])
             ->latest();
 
+        if ($request->filled('search')) {
+            $search = $request->string('search')->toString();
+            $query->where(function ($builder) use ($search) {
+                $builder->where('order_number', 'like', "%{$search}%")
+                    ->orWhereHas('outlet', fn ($outlet) => $outlet->where('name', 'like', "%{$search}%"));
+            });
+        }
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
         }
@@ -30,7 +40,34 @@ class OrderManagementController extends Controller
         return view('warehouse.orders.index', compact('orders'));
     }
 
-    public function review(Request $request, OutletOrder $order)
+    public function distributions(Request $request)
+    {
+        $query = OutletOrder::with([
+            'outlet',
+            'dispatcher',
+            'items.product',
+            'receipt',
+            'statusHistory.user',
+        ])
+            ->whereIn('status', ['dispatched', 'receipt_submitted', 'completed'])
+            ->latest('dispatched_at');
+        if ($request->filled('search')) {
+            $search = $request->string('search')->toString();
+            $query->where(function ($builder) use ($search) {
+                $builder->where('order_number', 'like', "%{$search}%")
+                    ->orWhereHas('outlet', fn ($outlet) => $outlet->where('name', 'like', "%{$search}%"));
+            });
+        }
+        $distributions = $query->paginate(15)->withQueryString();
+
+        return view('warehouse.distributions.index', compact('distributions'));
+    }
+
+    public function review(
+        Request $request,
+        OutletOrder $order,
+        SystemNotificationService $systemNotifications
+    )
     {
         $validated = $request->validate([
             'decision' => ['required', 'in:approve,reject'],
@@ -58,6 +95,14 @@ class OrderManagementController extends Controller
                     'reviewed_at' => now(),
                     'decision_notes' => $validated['decision_notes'] ?? null,
                 ]);
+                WorkflowStatusHistory::record(
+                    $order,
+                    'requested',
+                    'rejected',
+                    $request->user()->id,
+                    $validated['decision_notes'] ?? null,
+                    (int) $order->items()->sum('requested_quantity')
+                );
 
                 return;
             }
@@ -73,6 +118,15 @@ class OrderManagementController extends Controller
                 }
                 if ($quantity > 0) {
                     $hasQuantity = true;
+                    $product = Product::whereKey($item->product_id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+                    if (! $product->is_active || $quantity > $product->stock) {
+                        throw ValidationException::withMessages([
+                            'approved' => 'Stok gudang tidak mencukupi untuk menyetujui '
+                                .$product->name.'.',
+                        ]);
+                    }
                 }
                 $item->approved_quantity = $quantity;
                 $item->save();
@@ -90,13 +144,39 @@ class OrderManagementController extends Controller
                 'reviewed_at' => now(),
                 'decision_notes' => $validated['decision_notes'] ?? null,
             ]);
+            WorkflowStatusHistory::record(
+                $order,
+                'requested',
+                'approved',
+                $request->user()->id,
+                $validated['decision_notes'] ?? null,
+                (int) $order->items()->sum('approved_quantity')
+            );
         });
+
+        $order->loadMissing('outlet');
+        $approved = $validated['decision'] === 'approve';
+        $systemNotifications->record(
+            'order-review:'.$order->id,
+            'purchase_order',
+            'Pesanan '.$order->order_number.($approved ? ' disetujui' : ' ditolak'),
+            'Pesanan dari '.$order->outlet->name.' '
+                .($approved ? 'telah disetujui dan menunggu pengiriman.' : 'ditolak: '.($validated['decision_notes'] ?? 'tanpa catatan alasan.')),
+            ['Manager', 'Admin Prolog'],
+            'order',
+            $order->id,
+            $order->order_number
+        );
 
         return back()->with('success', 'Keputusan pesanan berhasil disimpan.');
     }
 
-    public function dispatch(Request $request, OutletOrder $order)
-    {
+    public function dispatch(
+        Request $request,
+        OutletOrder $order,
+        LowStockNotificationService $notifications,
+        SystemNotificationService $systemNotifications
+    ) {
         DB::transaction(function () use ($request, $order) {
             $order = OutletOrder::with(['outlet', 'items.product'])
                 ->whereKey($order->id)
@@ -164,32 +244,56 @@ class OrderManagementController extends Controller
             $order->update([
                 'status' => 'dispatched',
                 'dispatched_at' => now(),
+                'dispatched_by' => $request->user()->id,
             ]);
+            WorkflowStatusHistory::record(
+                $order,
+                'approved',
+                'dispatched',
+                $request->user()->id,
+                'Pengiriman pesanan dikonfirmasi.',
+                (int) $order->items()->sum('dispatched_quantity')
+            );
         });
+
+        $notifications->sync();
+        $order->loadMissing('outlet');
+        $systemNotifications->record(
+            'order-dispatch:'.$order->id,
+            'distribution',
+            'Distribusi ke '.$order->outlet->name.' telah dikirim',
+            'Pesanan '.$order->order_number.' telah dikirim; stok gudang sudah dimutasi sesuai jumlah yang disetujui.',
+            ['Manager', 'Admin Prolog'],
+            'order',
+            $order->id,
+            $order->order_number
+        );
 
         return back()->with('success', 'Barang berhasil dikirim dan stok gudang telah diperbarui.');
     }
 
-    public function receipts()
+    public function receipts(Request $request)
     {
-        $receipts = OutletReceipt::with([
+        $query = OutletReceipt::with([
             'outlet',
             'order.items.product',
             'items.orderItem.product',
             'items.orderItem',
-        ])->latest('submitted_at')->paginate(15);
+        ])->latest('submitted_at');
+        if ($request->filled('search')) {
+            $search = $request->string('search')->toString();
+            $query->whereHas('order', fn ($order) => $order->where('order_number', 'like', "%{$search}%"));
+        }
+        $receipts = $query->paginate(15)->withQueryString();
 
-        $distributions = StockTransaction::with(['product', 'user'])
-            ->where('type', 'out')
-            ->whereNotNull('destination')
-            ->latest('transaction_date')
-            ->paginate(10, ['*'], 'distributions_page')
-            ->withQueryString();
-
-        return view('warehouse.receipts.index', compact('receipts', 'distributions'));
+        return view('warehouse.receipts.index', compact('receipts'));
     }
 
-    public function validateReceipt(Request $request, OutletReceipt $receipt)
+    public function validateReceipt(
+        Request $request,
+        OutletReceipt $receipt,
+        SystemNotificationService $systemNotifications
+    )
     {
         $validated = $request->validate([
             'validated' => ['required', 'array'],
@@ -218,9 +322,10 @@ class OrderManagementController extends Controller
                 }
 
                 $accepted = (int) $validated['validated'][$item->id];
-                if ($accepted > $item->received_quantity) {
+                $usableReceived = $item->received_quantity - $item->damaged_quantity;
+                if ($accepted > $usableReceived) {
                     throw ValidationException::withMessages([
-                        'validated' => 'Jumlah tervalidasi tidak boleh melebihi jumlah yang dilaporkan outlet.',
+                        'validated' => 'Jumlah layak tervalidasi tidak boleh melebihi jumlah yang diterima dikurangi barang rusak.',
                     ]);
                 }
 
@@ -275,8 +380,36 @@ class OrderManagementController extends Controller
                 'notes' => trim(($receipt->notes ? $receipt->notes."\n" : '')
                     .($validated['notes'] ?? '')),
             ]);
+            WorkflowStatusHistory::record(
+                $receipt,
+                'submitted',
+                'validated',
+                $request->user()->id,
+                $validated['notes'] ?? null,
+                (int) $receipt->items()->sum('validated_quantity')
+            );
+            WorkflowStatusHistory::record(
+                $receipt->order,
+                'receipt_submitted',
+                'completed',
+                $request->user()->id,
+                'Penerimaan tervalidasi oleh petugas gudang.',
+                (int) $receipt->items()->sum('validated_quantity')
+            );
             $receipt->order->update(['status' => 'completed']);
         });
+
+        $receipt->loadMissing('outlet', 'order');
+        $systemNotifications->record(
+            'receipt-validated:'.$receipt->id,
+            'distribution',
+            'Penerimaan '.$receipt->order->order_number.' telah divalidasi',
+            'Penerimaan barang dari '.$receipt->outlet->name.' sudah diperiksa dan stok outlet diperbarui sesuai jumlah layak.',
+            ['Manager', 'Admin Prolog'],
+            'order',
+            $receipt->order_id,
+            $receipt->order->order_number
+        );
 
         return back()->with('success', 'Penerimaan telah divalidasi dan stok outlet diperbarui.');
     }

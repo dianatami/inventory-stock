@@ -5,11 +5,11 @@ namespace Tests\Feature;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\StockTransaction;
-use App\Models\Supplier;
+use App\Models\SystemNotification;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class WarehouseFeaturesTest extends TestCase
@@ -22,7 +22,10 @@ class WarehouseFeaturesTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('distributions.index'))
-            ->assertRedirect(route('warehouse.receipts.index'));
+            ->assertOk()
+            ->assertSee('Distribusi Barang')
+            ->assertSee('Total kuantitas')
+            ->assertSee('Belum ada distribusi yang dikirim.');
     }
 
     public function test_supplier_uses_whatsapp_without_a_separate_phone_field(): void
@@ -83,8 +86,185 @@ class WarehouseFeaturesTest extends TestCase
 
         $this->get(route('notifications.low-stock'))
             ->assertOk()
-            ->assertSee('Notifikasi Stok Menipis')
+            ->assertSee('Pusat Notifikasi Sistem')
             ->assertSee('Beras');
+    }
+
+    public function test_low_stock_notifications_poll_without_duplicates_and_can_be_read(): void
+    {
+        [$user, $product] = $this->createManagerAndProduct(4);
+        $product->update(['minimum_stock' => 10]);
+
+        $this->actingAs($user)
+            ->getJson(route('notifications.feed'))
+            ->assertOk()
+            ->assertJsonPath('unread_count', 1)
+            ->assertJsonPath('items.0.severity', 'critical')
+            ->assertJsonPath('items.0.current_stock', 4);
+
+        $this->getJson(route('notifications.feed'))
+            ->assertOk()
+            ->assertJsonPath('unread_count', 1);
+        $this->assertDatabaseCount('low_stock_notifications', 1);
+
+        $notification = \App\Models\LowStockNotification::firstOrFail();
+        $this->patch(route('notifications.read', $notification))
+            ->assertNoContent();
+        $this->getJson(route('notifications.feed'))
+            ->assertOk()
+            ->assertJsonPath('unread_count', 0);
+
+        $product->update(['stock' => 10]);
+        $this->getJson(route('notifications.feed'))
+            ->assertOk()
+            ->assertJsonPath('unread_count', 1)
+            ->assertJsonPath('items.0.severity', 'low');
+        $this->post(route('notifications.read-all'))->assertNoContent();
+        $this->getJson(route('notifications.feed'))
+            ->assertOk()
+            ->assertJsonPath('unread_count', 0);
+
+        $product->update(['stock' => 11]);
+        $this->getJson(route('notifications.feed'))->assertOk();
+        $this->assertNotNull($notification->fresh()->resolved_at);
+
+        $product->update(['stock' => 4]);
+        $this->getJson(route('notifications.feed'))
+            ->assertOk()
+            ->assertJsonPath('unread_count', 1);
+        $this->assertDatabaseCount('low_stock_notifications', 2);
+    }
+
+    public function test_scheduled_stock_sync_command_creates_low_stock_notifications(): void
+    {
+        [, $product] = $this->createManagerAndProduct(4);
+        $product->update(['minimum_stock' => 10]);
+
+        $this->artisan('notifications:sync-stock')
+            ->expectsOutput('Notifikasi stok berhasil disinkronkan.')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('low_stock_notifications', [
+            'product_id' => $product->id,
+            'severity' => 'critical',
+            'current_stock' => 4,
+        ]);
+    }
+
+    public function test_activity_notifications_are_scoped_filterable_and_marked_read(): void
+    {
+        [$manager] = $this->createManagerAndProduct(10);
+        $notification = SystemNotification::create([
+            'event_key' => 'test-return-RT-001',
+            'category' => 'return',
+            'title' => 'Retur RT-001 menunggu persetujuan',
+            'message' => 'Outlet A mengajukan retur dan menunggu persetujuan.',
+            'audience' => ['Manager'],
+            'reference_type' => 'return',
+            'reference_id' => 1,
+            'reference_number' => 'RT-001',
+        ]);
+        SystemNotification::create([
+            'event_key' => 'test-order-ORD-001',
+            'category' => 'purchase_order',
+            'title' => 'Pesanan ORD-001 menunggu persetujuan',
+            'message' => 'Pesanan outlet menunggu pemeriksaan.',
+            'audience' => ['Manager'],
+            'reference_type' => 'order',
+            'reference_id' => 1,
+            'reference_number' => 'ORD-001',
+        ]);
+
+        $this->actingAs($manager)
+            ->getJson(route('notifications.feed'))
+            ->assertOk()
+            ->assertJsonPath('unread_count', 2)
+            ->assertJsonFragment(['category' => 'return', 'reference_number' => 'RT-001']);
+
+        $this->get(route('notifications.low-stock', ['category' => 'return', 'search' => 'RT-001']))
+            ->assertOk()
+            ->assertSee('Retur RT-001 menunggu persetujuan')
+            ->assertDontSee('Pesanan ORD-001 menunggu persetujuan');
+
+        $this->patch(route('notifications.activity.read', $notification))->assertNoContent();
+        $this->assertNotNull($notification->fresh()->read_at);
+        $this->post(route('notifications.read-all'))->assertNoContent();
+        $this->getJson(route('notifications.feed'))
+            ->assertOk()
+            ->assertJsonPath('unread_count', 0);
+    }
+
+    public function test_activity_notification_read_is_limited_to_its_audience(): void
+    {
+        [$manager] = $this->createManagerAndProduct(10);
+        $notification = SystemNotification::create([
+            'event_key' => 'manager-only-event',
+            'category' => 'purchase_order',
+            'title' => 'Pesanan menunggu persetujuan',
+            'message' => 'Pesanan outlet menunggu pemeriksaan.',
+            'audience' => ['Manager'],
+        ]);
+        $otherRole = User::factory()->create([
+            'username' => 'admin-prolog-notification',
+            'role' => 'Admin Prolog',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($otherRole)
+            ->patch(route('notifications.activity.read', $notification))
+            ->assertForbidden();
+        $this->assertNull($notification->fresh()->read_at);
+    }
+
+    public function test_product_stock_is_audited_and_cannot_be_changed_from_edit_form(): void
+    {
+        [$user, $product] = $this->createManagerAndProduct(10);
+
+        $this->actingAs($user)
+            ->put(route('products.update', $product), [
+                'code' => $product->code,
+                'name' => $product->name,
+                'category_id' => $product->category_id,
+                'supplier_id' => '',
+                'unit' => $product->unit,
+                'stock' => 99,
+                'minimum_stock' => $product->minimum_stock,
+                'description' => '',
+                'is_active' => 1,
+            ])
+            ->assertSessionHasErrors('stock');
+
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 10]);
+        $this->get(route('products.edit', $product))
+            ->assertOk()
+            ->assertSee('Gunakan menu Stok Masuk, Stok Keluar, atau Penyesuaian Stok');
+    }
+
+    public function test_initial_product_stock_is_recorded_as_a_stock_transaction(): void
+    {
+        [$user, $product] = $this->createManagerAndProduct(10);
+
+        $this->actingAs($user)
+            ->post(route('products.store'), [
+                'code' => 'WH-INITIAL-002',
+                'name' => 'Minyak Goreng',
+                'category_id' => $product->category_id,
+                'unit' => 'liter',
+                'stock' => 7,
+                'minimum_stock' => 2,
+                'is_active' => 1,
+            ])
+            ->assertRedirect(route('products.index'));
+
+        $created = Product::where('code', 'WH-INITIAL-002')->firstOrFail();
+        $this->assertDatabaseHas('stock_transactions', [
+            'product_id' => $created->id,
+            'type' => 'in',
+            'quantity' => 7,
+            'stock_before' => 0,
+            'stock_after' => 7,
+            'reference_number' => 'INITIAL-WH-INITIAL-002',
+        ]);
     }
 
     public function test_daily_stock_report_filters_transactions_by_selected_date(): void

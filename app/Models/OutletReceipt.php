@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class OutletReceipt extends Model
 {
@@ -28,5 +29,10 @@ class OutletReceipt extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OutletReceiptItem::class);
+    }
+
+    public function statusHistory(): MorphMany
+    {
+        return $this->morphMany(WorkflowStatusHistory::class, 'subject');
     }
 }

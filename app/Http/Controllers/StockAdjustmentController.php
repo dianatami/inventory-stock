@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\StockTransaction;
+use App\Services\LowStockNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -46,7 +47,7 @@ class StockAdjustmentController extends Controller
         return view('stock_adjustments.create', compact('products'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, LowStockNotificationService $notifications)
     {
         $validated = $request->validate([
             'product_id' => ['required', 'integer', 'exists:products,id'],
@@ -88,6 +89,8 @@ class StockAdjustmentController extends Controller
                 'notes' => $validated['notes'],
             ]);
         });
+
+        $notifications->sync();
 
         return redirect()->route('stock-adjustments.index')
             ->with('success', 'Penyesuaian stok berhasil dicatat. Nomor transaksi: '.$transaction->id);

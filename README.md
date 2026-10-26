@@ -13,14 +13,24 @@ Aplikasi ini menyediakan dashboard gudang dan portal User Outlet dengan pemisaha
 
 ### Menjalankan aplikasi
 
-1. Siapkan MySQL dan sesuaikan kredensial koneksi pada `.env`.
+1. Jalankan MySQL dari Laragon dan sesuaikan kredensial koneksi pada `.env`.
 2. Jalankan `php artisan migrate --seed` untuk membuat skema dan akun Manager awal.
-3. Jalankan `npm install` lalu `npm run build`, kemudian mulai aplikasi menggunakan `php artisan serve`.
+3. Jalankan `npm install` lalu `npm run build`, kemudian buka virtual host Laragon atau mulai aplikasi menggunakan `php artisan serve`.
 4. Masuk sebagai Manager, buat outlet pada menu **Data Outlet**, lalu buat akun **User Outlet** dari **Manajemen Pengguna** dan hubungkan ke outlet.
+
+Halaman login tersedia di `/` (route bernama `login`). Dashboard gudang tersedia di `/dashboard`; portal User Outlet tersedia di `/outlet/dashboard`. URL `/home` merupakan alias terlindungi autentikasi yang meneruskan pengguna ke dashboard sesuai role.
 
 Alur pesanan, pengiriman, validasi penerimaan, retur, stok opname, dan laporan barang terpakai tersedia pada menu masing-masing. Pengiriman mengurangi stok gudang, sedangkan validasi penerimaan menambah stok outlet.
 
 Ubah password awal Manager segera setelah login pertama.
+
+### Distribusi, retur, dan notifikasi stok
+
+Outlet hanya dapat mengajukan jumlah yang tersedia saat pesanan dibuat. Admin Prolog memeriksa stok lagi sebelum menyetujui dan saat mengirim; stok gudang baru berkurang ketika pengiriman dikonfirmasi. Stok outlet baru bertambah setelah penerimaan divalidasi gudang. Untuk retur, outlet mengirim barang setelah persetujuan; stok outlet berkurang saat pengiriman retur dan stok gudang hanya bertambah untuk jumlah yang dinyatakan layak setelah pemeriksaan fisik.
+
+Perubahan status pesanan, penerimaan, dan retur dicatat bersama pengguna, waktu, jumlah, serta catatan. Stok awal produk juga dicatat sebagai transaksi masuk; saldo stok tidak dapat diedit dari formulir edit produk.
+
+Notifikasi stok dan aktivitas transaksi pada lonceng navbar mengambil kondisi dari database. Pemeriksaan stok berjalan setelah transaksi stok berhasil, saat feed dimuat, dan setiap 60 detik selama halaman aktif. Untuk pemeriksaan berkala saat tidak ada halaman yang terbuka, jalankan `php artisan schedule:work` di terminal Laragon terpisah; scheduler menjalankan `notifications:sync-stock` setiap menit. Pusat notifikasi tersedia di `/notifications`. Batas kritis ditetapkan pada stok positif yang sama dengan atau di bawah setengah batas minimum (dibulatkan ke bawah); stok nol ditandai habis. Notifikasi internal ini tidak mengirim pesan WhatsApp. Pengguna Laragon yang memperbarui aplikasi perlu menjalankan `php artisan migrate` setelah mencadangkan database, lalu `npm run build` untuk membangun aset frontend. Tes otomatis dapat dijalankan dengan `php artisan test`.
 
 ## About Laravel
 

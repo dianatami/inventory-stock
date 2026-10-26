@@ -13,6 +13,8 @@ use App\Models\OutletStocktake;
 use App\Models\OutletStocktakeItem;
 use App\Models\OutletStockTransaction;
 use App\Models\Product;
+use App\Models\WorkflowStatusHistory;
+use App\Services\SystemNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -72,7 +74,7 @@ class OutletPortalController extends Controller
     public function orders(Request $request)
     {
         $outlet = $this->outlet($request);
-        $orders = OutletOrder::with(['items.product', 'receipt'])
+        $orders = OutletOrder::with(['items.product', 'receipt', 'statusHistory.user'])
             ->where('outlet_id', $outlet->id)
             ->latest()
             ->paginate(15)
@@ -89,7 +91,7 @@ class OutletPortalController extends Controller
         return view('outlet.orders.create', compact('outlet', 'products'));
     }
 
-    public function storeOrder(Request $request)
+    public function storeOrder(Request $request, SystemNotificationService $systemNotifications)
     {
         $outlet = $this->outlet($request);
         $validated = $request->validate([
@@ -115,11 +117,18 @@ class OutletPortalController extends Controller
 
                 $product = Product::whereKey($item['product_id'])
                     ->where('is_active', true)
+                    ->lockForUpdate()
                     ->first();
 
                 if (! $product) {
                     throw ValidationException::withMessages([
                         'items' => 'Salah satu produk tidak aktif atau tidak tersedia.',
+                    ]);
+                }
+                if ((int) $item['quantity'] > $product->stock) {
+                    throw ValidationException::withMessages([
+                        'items' => 'Jumlah pesanan melebihi stok gudang yang tersedia untuk '
+                            .$product->name.'.',
                     ]);
                 }
 
@@ -135,19 +144,47 @@ class OutletPortalController extends Controller
                 ]);
             }
 
+            WorkflowStatusHistory::record(
+                $order,
+                null,
+                'requested',
+                $request->user()->id,
+                'Pesanan dibuat oleh outlet.',
+                (int) $order->items()->sum('requested_quantity')
+            );
+
             return $order;
         });
+
+        $systemNotifications->record(
+            'order-request:'.$order->id,
+            'purchase_order',
+            'Pesanan '.$order->order_number.' menunggu persetujuan',
+            'Pesanan baru dari '.$outlet->name.' menunggu pemeriksaan dan persetujuan.',
+            ['Manager', 'Admin Prolog'],
+            'order',
+            $order->id,
+            $order->order_number
+        );
 
         return redirect()->route('outlet.orders.index')
             ->with('success', 'Pesanan '.$order->order_number.' berhasil diajukan.');
     }
 
-    public function submitReceipt(Request $request, OutletOrder $order)
+    public function submitReceipt(
+        Request $request,
+        OutletOrder $order,
+        SystemNotificationService $systemNotifications
+    )
     {
         $outlet = $this->outlet($request);
         $validated = $request->validate([
             'received' => ['required', 'array', 'min:1'],
             'received.*' => ['required', 'integer', 'min:0', 'max:4294967295'],
+            'damaged' => ['sometimes', 'array'],
+            'damaged.*' => ['required', 'integer', 'min:0', 'max:4294967295'],
+            'short' => ['sometimes', 'array'],
+            'short.*' => ['required', 'integer', 'min:0', 'max:4294967295'],
             'notes' => ['nullable', 'string', 'max:5000'],
         ]);
 
@@ -165,7 +202,15 @@ class OutletPortalController extends Controller
 
             $items = $lockedOrder->items()->get()->keyBy('id');
             $receiptLines = [];
-            $hasReceived = false;
+            $hasReported = false;
+
+            foreach ($items as $orderItem) {
+                if (! array_key_exists($orderItem->id, $validated['received'])) {
+                    throw ValidationException::withMessages([
+                        'received' => 'Laporkan jumlah setiap produk yang dikirim, termasuk jumlah nol bila tidak diterima.',
+                    ]);
+                }
+            }
 
             foreach ($validated['received'] as $itemId => $quantity) {
                 $orderItem = $items->get((int) $itemId);
@@ -175,16 +220,28 @@ class OutletPortalController extends Controller
                     ]);
                 }
 
-                $hasReceived = $hasReceived || (int) $quantity > 0;
+                $damaged = (int) ($validated['damaged'][$itemId] ?? 0);
+                $short = (int) ($validated['short'][$itemId]
+                    ?? ($orderItem->dispatched_quantity - (int) $quantity));
+                if ($damaged > $quantity
+                    || $short !== $orderItem->dispatched_quantity - (int) $quantity) {
+                    throw ValidationException::withMessages([
+                        'received' => 'Jumlah rusak tidak boleh melebihi jumlah diterima dan jumlah kurang harus sesuai selisih pengiriman.',
+                    ]);
+                }
+
+                $hasReported = $hasReported || (int) $quantity > 0 || $short > 0;
                 $receiptLines[] = [
                     'outlet_order_item_id' => $orderItem->id,
                     'received_quantity' => (int) $quantity,
+                    'damaged_quantity' => $damaged,
+                    'short_quantity' => $short,
                 ];
             }
 
-            if (! $hasReceived) {
+            if (! $hasReported) {
                 throw ValidationException::withMessages([
-                    'received' => 'Masukkan jumlah yang benar-benar diterima.',
+                    'received' => 'Masukkan jumlah diterima atau selisih barang yang kurang.',
                 ]);
             }
 
@@ -197,8 +254,35 @@ class OutletPortalController extends Controller
                 'submitted_at' => now(),
             ]);
             $receipt->items()->createMany($receiptLines);
+            WorkflowStatusHistory::record(
+                $receipt,
+                null,
+                'submitted',
+                $request->user()->id,
+                $validated['notes'] ?? null,
+                collect($receiptLines)->sum('received_quantity')
+            );
+            WorkflowStatusHistory::record(
+                $lockedOrder,
+                $lockedOrder->status,
+                'receipt_submitted',
+                $request->user()->id,
+                'Outlet mengajukan konfirmasi penerimaan.',
+                collect($receiptLines)->sum('received_quantity')
+            );
             $lockedOrder->update(['status' => 'receipt_submitted']);
         });
+
+        $systemNotifications->record(
+            'receipt-submitted:'.$order->id,
+            'distribution',
+            'Penerimaan '.$order->order_number.' menunggu validasi',
+            'Outlet '.$outlet->name.' mengonfirmasi penerimaan pesanan dan menunggu pemeriksaan gudang.',
+            ['Manager', 'Admin Prolog'],
+            'order',
+            $order->id,
+            $order->order_number
+        );
 
         return redirect()->route('outlet.orders.index')
             ->with('success', 'Konfirmasi penerimaan dikirim untuk divalidasi gudang.');
@@ -207,7 +291,7 @@ class OutletPortalController extends Controller
     public function returns(Request $request)
     {
         $outlet = $this->outlet($request);
-        $returns = OutletReturn::with(['items.product', 'order'])
+        $returns = OutletReturn::with(['items.product', 'order', 'statusHistory.user'])
             ->where('outlet_id', $outlet->id)
             ->latest()
             ->paginate(15)
@@ -229,13 +313,17 @@ class OutletPortalController extends Controller
         return view('outlet.returns.create', compact('outlet', 'receipts'));
     }
 
-    public function storeReturn(Request $request)
+    public function storeReturn(Request $request, SystemNotificationService $systemNotifications)
     {
         $outlet = $this->outlet($request);
         $validated = $request->validate([
             'receipt_id' => ['required', 'integer', 'exists:outlet_receipts,id'],
             'items' => ['required', 'array', 'min:1'],
             'items.*' => ['nullable', 'integer', 'min:0', 'max:4294967295'],
+            'conditions' => ['required', 'array'],
+            'conditions.*' => ['nullable', 'in:damaged,expired,wrong_item,packaging,other'],
+            'item_notes' => ['nullable', 'array'],
+            'item_notes.*' => ['nullable', 'string', 'max:1000'],
             'reason' => ['required', 'string', 'max:5000'],
         ]);
 
@@ -261,6 +349,12 @@ class OutletPortalController extends Controller
                         'items' => 'Produk retur tidak sesuai dengan penerimaan terpilih.',
                     ]);
                 }
+                $condition = $validated['conditions'][$receiptItemId] ?? null;
+                if (! in_array($condition, ['damaged', 'expired', 'wrong_item', 'packaging', 'other'], true)) {
+                    throw ValidationException::withMessages([
+                        'conditions' => 'Pilih kondisi untuk setiap produk yang diretur.',
+                    ]);
+                }
 
                 $alreadyRequested = OutletReturnItem::where('product_id', $receiptItem->orderItem->product_id)
                     ->whereHas('returnRequest', function ($query) use ($receipt) {
@@ -283,6 +377,8 @@ class OutletPortalController extends Controller
                 $items[] = [
                     'product_id' => $receiptItem->orderItem->product_id,
                     'requested_quantity' => $quantity,
+                    'condition' => $condition,
+                    'notes' => $validated['item_notes'][$receiptItemId] ?? null,
                 ];
             }
 
@@ -302,12 +398,118 @@ class OutletPortalController extends Controller
                 'reason' => $validated['reason'],
             ]);
             $returnRequest->items()->createMany($items);
+            WorkflowStatusHistory::record(
+                $returnRequest,
+                null,
+                'requested',
+                $request->user()->id,
+                $validated['reason'],
+                collect($items)->sum('requested_quantity')
+            );
 
             return $returnRequest;
         });
 
+        $systemNotifications->record(
+            'return-request:'.$returnRequest->id,
+            'return',
+            'Retur '.$returnRequest->return_number.' menunggu persetujuan',
+            'Pengajuan dari '.$outlet->name.' menunggu persetujuan Kepala Logistik.',
+            ['Manager', 'Kepala Logistik'],
+            'return',
+            $returnRequest->id,
+            $returnRequest->return_number
+        );
+
         return redirect()->route('outlet.returns.index')
             ->with('success', 'Pengajuan retur '.$returnRequest->return_number.' berhasil dikirim.');
+    }
+
+    public function dispatchReturn(
+        Request $request,
+        OutletReturn $return,
+        SystemNotificationService $systemNotifications
+    )
+    {
+        $outlet = $this->outlet($request);
+
+        DB::transaction(function () use ($request, $return, $outlet) {
+            Outlet::whereKey($outlet->id)->lockForUpdate()->firstOrFail();
+            $lockedReturn = OutletReturn::with('items.product')
+                ->whereKey($return->id)
+                ->where('outlet_id', $outlet->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($lockedReturn->status !== 'approved') {
+                throw ValidationException::withMessages([
+                    'return' => 'Hanya retur yang disetujui dan belum dikirim yang dapat diproses.',
+                ]);
+            }
+
+            foreach ($lockedReturn->items as $item) {
+                $quantity = (int) $item->requested_quantity;
+                $stock = OutletStock::where('outlet_id', $outlet->id)
+                    ->where('product_id', $item->product_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $stock || $stock->quantity < $quantity) {
+                    throw ValidationException::withMessages([
+                        'return' => 'Stok outlet tidak cukup untuk mengirim retur '
+                            .$item->product->name.'.',
+                    ]);
+                }
+
+                $before = $stock->quantity;
+                $stock->quantity -= $quantity;
+                $stock->save();
+                $item->shipped_quantity = $quantity;
+                $item->save();
+
+                OutletStockTransaction::create([
+                    'outlet_id' => $outlet->id,
+                    'product_id' => $item->product_id,
+                    'user_id' => $request->user()->id,
+                    'type' => 'return',
+                    'quantity' => $quantity,
+                    'stock_before' => $before,
+                    'stock_after' => $stock->quantity,
+                    'source_type' => 'return_dispatch_item',
+                    'source_id' => $item->id,
+                    'transaction_date' => now(),
+                    'notes' => 'Pengiriman retur '.$lockedReturn->return_number,
+                ]);
+            }
+
+            $lockedReturn->update([
+                'status' => 'dispatched',
+                'dispatched_by' => $request->user()->id,
+                'dispatched_at' => now(),
+            ]);
+            WorkflowStatusHistory::record(
+                $lockedReturn,
+                'approved',
+                'dispatched',
+                $request->user()->id,
+                'Barang retur dikirim dari outlet.',
+                (int) $lockedReturn->items->sum('shipped_quantity')
+            );
+        });
+
+        $return->loadMissing('outlet');
+        $systemNotifications->record(
+            'return-dispatch:'.$return->id,
+            'return',
+            'Retur '.$return->return_number.' telah dikirim',
+            'Outlet '.$return->outlet->name.' telah mengirim barang retur untuk pemeriksaan gudang.',
+            ['Manager', 'Admin Prolog'],
+            'return',
+            $return->id,
+            $return->return_number
+        );
+
+        return back()->with('success', 'Barang retur dikirim. Stok outlet telah dikurangi.');
     }
 
     public function stocktake(Request $request)

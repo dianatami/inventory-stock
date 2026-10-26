@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\LowStockNotification;
 use App\Models\OutletOrder;
+use App\Models\OutletReceipt;
+use App\Models\OutletReturn;
 use App\Models\Product;
 use App\Models\StockTransaction;
 use App\Models\Supplier;
@@ -16,6 +18,7 @@ class DashboardController extends Controller
     public function __invoke(LowStockNotificationService $notifications)
     {
         $notifications->sync();
+        $role = auth()->user()->role;
         $metrics = [
             'products' => Product::count(),
             'stock' => Product::sum('stock'),
@@ -31,6 +34,24 @@ class DashboardController extends Controller
             'suppliers' => Supplier::count(),
             'users' => User::count(),
             'categories' => Category::count(),
+            'pending_orders' => in_array($role, ['Manager', 'Admin Prolog'], true)
+                ? OutletOrder::where('status', 'requested')->count()
+                : 0,
+            'dispatched_orders' => in_array($role, ['Manager', 'Admin Prolog'], true)
+                ? OutletOrder::where('status', 'dispatched')->count()
+                : 0,
+            'pending_receipts' => in_array($role, ['Manager', 'Admin Prolog'], true)
+                ? OutletReceipt::where('status', 'submitted')->count()
+                : 0,
+            'pending_returns' => in_array($role, ['Manager', 'Kepala Logistik'], true)
+                ? OutletReturn::where('status', 'requested')->count()
+                : 0,
+            'active_returns' => in_array($role, ['Manager', 'Kepala Logistik'], true)
+                ? OutletReturn::whereIn('status', ['approved', 'dispatched'])->count()
+                : 0,
+            'returns_today' => in_array($role, ['Manager', 'Kepala Logistik'], true)
+                ? OutletReturn::where('status', 'verified')->whereDate('verified_at', today())->count()
+                : 0,
         ];
 
         $monthlyTransactions = collect(range(5, 0))
@@ -84,8 +105,16 @@ class DashboardController extends Controller
         $newOrdersCount = in_array(auth()->user()->role, ['Manager', 'Admin Prolog'], true)
             ? OutletOrder::where('status', 'requested')->count()
             : 0;
+        $recentReturns = in_array($role, ['Manager', 'Kepala Logistik'], true)
+            ? OutletReturn::with('outlet', 'items')
+                ->whereIn('status', ['requested', 'approved', 'dispatched'])
+                ->latest()
+                ->limit(6)
+                ->get()
+            : collect();
 
         return view('dashboard', compact(
+            'role',
             'metrics',
             'monthlyTransactions',
             'chartMax',
@@ -93,7 +122,8 @@ class DashboardController extends Controller
             'lowStockProducts',
             'activeNotifications',
             'newOrders',
-            'newOrdersCount'
+            'newOrdersCount',
+            'recentReturns'
         ));
     }
 }

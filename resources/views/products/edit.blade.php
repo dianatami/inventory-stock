@@ -113,19 +113,8 @@
         </div>
 
         <div class="form-group">
-            <label for="stock">Stok *</label>
-            <input
-                type="number"
-                id="stock"
-                name="stock"
-                value="{{ old('stock', $product->stock) }}"
-                min="0"
-                step="1"
-                required
-            >
-            @error('stock')
-                <small class="error-message">{{ $message }}</small>
-            @enderror
+            <label>Stok Saat Ini</label>
+            <p>{{ number_format($product->stock, 0, ',', '.') }} {{ $product->unit }}. Gunakan menu Stok Masuk, Stok Keluar, atau Penyesuaian Stok untuk mengubah saldo.</p>
         </div>
 
         <div class="form-group">

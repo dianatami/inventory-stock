@@ -3,15 +3,25 @@
 @section('page-title', 'Pesanan Outlet')
 @section('content')
 <div class="container">
+    @php
+        $orderStatusLabels = [
+            'requested' => 'Menunggu pemeriksaan',
+            'approved' => 'Disetujui',
+            'rejected' => 'Ditolak',
+            'dispatched' => 'Dalam pengiriman',
+            'receipt_submitted' => 'Menunggu validasi penerimaan',
+            'completed' => 'Selesai',
+        ];
+    @endphp
     <div class="page-header"><div><h1>Pesanan Outlet</h1><p>Periksa permintaan, tetapkan jumlah disetujui, lalu kirim barang.</p></div></div>
     @if ($errors->any())<div class="alert alert-danger"><ul>@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
     <div class="card" style="margin-bottom:18px"><form method="GET" action="{{ route('warehouse.orders.index') }}" class="user-filter-grid">
-        <div class="form-group"><label>Status</label><select name="status"><option value="">Semua status</option>@foreach (['requested','approved','rejected','dispatched','receipt_submitted','completed'] as $status)<option value="{{ $status }}" @selected(request('status') === $status)>{{ str_replace('_',' ',ucfirst($status)) }}</option>@endforeach</select></div>
+        <div class="form-group"><label>Status</label><select name="status"><option value="">Semua status</option>@foreach ($orderStatusLabels as $status => $label)<option value="{{ $status }}" @selected(request('status') === $status)>{{ $label }}</option>@endforeach</select></div>
         <div class="form-actions"><button class="btn btn-primary">Filter</button></div>
     </form></div>
     @forelse ($orders as $order)
         <section class="card" style="margin-bottom:18px">
-            <div class="page-header"><div><h2>{{ $order->order_number }} · {{ $order->outlet->name }}</h2><p>{{ $order->created_at->format('d/m/Y H:i') }} oleh {{ $order->user->name }} · <span class="badge">{{ str_replace('_',' ',ucfirst($order->status)) }}</span></p></div></div>
+            <div class="page-header"><div><h2>{{ $order->order_number }} · {{ $order->outlet->name }}</h2><p>{{ $order->created_at->format('d/m/Y H:i') }} oleh {{ $order->user->name }} · <span class="badge">{{ $orderStatusLabels[$order->status] ?? $order->status }}</span></p></div></div>
             @if ($order->notes)<p>{{ $order->notes }}</p>@endif
             @if ($order->decision_notes)<p class="text-muted">Catatan: {{ $order->decision_notes }}</p>@endif
             <div class="table-responsive"><table class="table"><thead><tr><th>Produk</th><th>Stok gudang</th><th>Diminta</th><th>Disetujui</th><th>Dikirim</th></tr></thead><tbody>

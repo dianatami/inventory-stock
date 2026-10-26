@@ -6,12 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class OutletOrder extends Model
 {
     protected $fillable = [
         'order_number', 'outlet_id', 'user_id', 'status', 'notes',
         'decision_notes', 'reviewed_by', 'reviewed_at', 'dispatched_at',
+        'dispatched_by',
     ];
 
     protected $casts = ['reviewed_at' => 'datetime', 'dispatched_at' => 'datetime'];
@@ -31,6 +33,11 @@ class OutletOrder extends Model
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
+    public function dispatcher(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'dispatched_by');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(OutletOrderItem::class);
@@ -44,5 +51,10 @@ class OutletOrder extends Model
     public function returns(): HasMany
     {
         return $this->hasMany(OutletReturn::class);
+    }
+
+    public function statusHistory(): MorphMany
+    {
+        return $this->morphMany(WorkflowStatusHistory::class, 'subject');
     }
 }

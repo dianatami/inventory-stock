@@ -9,11 +9,13 @@ class OutletReceiptItem extends Model
 {
     protected $fillable = [
         'outlet_receipt_id', 'outlet_order_item_id',
-        'received_quantity', 'validated_quantity',
+        'received_quantity', 'damaged_quantity', 'short_quantity', 'validated_quantity',
     ];
 
     protected $casts = [
         'received_quantity' => 'integer',
+        'damaged_quantity' => 'integer',
+        'short_quantity' => 'integer',
         'validated_quantity' => 'integer',
     ];
 

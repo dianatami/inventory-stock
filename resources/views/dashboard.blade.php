@@ -4,6 +4,37 @@
 @section('page-title', 'Dashboard')
 
 @section('content')
+    @php
+        $dashboardCards = match ($role) {
+            'Manager' => [
+                ['key' => 'products', 'label' => 'Total Produk', 'detail' => 'Produk terdaftar', 'icon' => '▣'],
+                ['key' => 'stock', 'label' => 'Total Stok', 'detail' => 'Unit seluruh produk', 'icon' => '▤'],
+                ['key' => 'low_stock', 'label' => 'Stok Menipis', 'detail' => 'Pada atau di bawah minimum', 'icon' => '⚠', 'warning' => true],
+                ['key' => 'today_in', 'label' => 'Barang Masuk Hari Ini', 'detail' => 'Transaksi masuk', 'icon' => '↓'],
+                ['key' => 'today_out', 'label' => 'Barang Keluar Hari Ini', 'detail' => 'Transaksi keluar', 'icon' => '↑'],
+                ['key' => 'suppliers', 'label' => 'Total Supplier', 'detail' => 'Supplier terdaftar', 'icon' => '♧'],
+                ['key' => 'users', 'label' => 'Total Pengguna', 'detail' => 'Akun sistem', 'icon' => '♙'],
+                ['key' => 'categories', 'label' => 'Jumlah Kategori', 'detail' => 'Kategori produk', 'icon' => '▦'],
+            ],
+            'Admin Prolog' => [
+                ['key' => 'products', 'label' => 'Total Produk', 'detail' => 'Produk terdaftar', 'icon' => '▣'],
+                ['key' => 'stock', 'label' => 'Total Stok Gudang', 'detail' => 'Unit seluruh produk', 'icon' => '▤'],
+                ['key' => 'low_stock', 'label' => 'Stok Menipis', 'detail' => 'Pada atau di bawah minimum', 'icon' => '⚠', 'warning' => true],
+                ['key' => 'today_in', 'label' => 'Barang Masuk Hari Ini', 'detail' => 'Transaksi masuk', 'icon' => '↓'],
+                ['key' => 'today_out', 'label' => 'Barang Keluar Hari Ini', 'detail' => 'Transaksi keluar', 'icon' => '↑'],
+                ['key' => 'pending_orders', 'label' => 'Pesanan Menunggu', 'detail' => 'Menunggu pemeriksaan', 'icon' => '⇢'],
+                ['key' => 'dispatched_orders', 'label' => 'Distribusi Berjalan', 'detail' => 'Pesanan sudah dikirim', 'icon' => '↗'],
+                ['key' => 'pending_receipts', 'label' => 'Penerimaan Menunggu', 'detail' => 'Menunggu validasi gudang', 'icon' => '✓'],
+            ],
+            default => [
+                ['key' => 'pending_returns', 'label' => 'Retur Menunggu', 'detail' => 'Menunggu keputusan logistik', 'icon' => '↩', 'warning' => true],
+                ['key' => 'active_returns', 'label' => 'Retur dalam Proses', 'detail' => 'Disetujui atau dikirim outlet', 'icon' => '⇢'],
+                ['key' => 'returns_today', 'label' => 'Retur Diverifikasi Hari Ini', 'detail' => 'Selesai diperiksa gudang', 'icon' => '✓'],
+            ],
+        };
+    @endphp
+
+    <div class="dashboard-breadcrumb"><span>Dashboard</span><span aria-hidden="true">›</span><span>{{ $role }}</span></div>
     @if ($newOrders->isNotEmpty())
         <dialog class="dashboard-order-modal" data-order-notification>
             <div class="dashboard-order-modal-content">
@@ -28,56 +59,36 @@
     @endif
 
     <div class="welcome-panel">
-        <h2>Selamat datang, {{ auth()->user()->name }}!</h2>
-        <p>
-            Ringkasan inventori PT Tiga Pemuda Nusantara untuk membantu
-            memantau persediaan dan aktivitas transaksi gudang.
-        </p>
+        <div>
+            <span class="welcome-eyebrow">RINGKASAN OPERASIONAL</span>
+            <h2>Selamat datang, {{ auth()->user()->name }}!</h2>
+            <p>
+                @if ($role === 'Kepala Logistik')
+                    Pantau pengajuan retur dan aktivitas logistik yang memerlukan tindak lanjut.
+                @elseif ($role === 'Admin Prolog')
+                    Pantau stok gudang, pesanan outlet, dan proses distribusi barang.
+                @else
+                    Ringkasan inventori PT Tiga Pemuda Nusantara untuk memantau persediaan dan aktivitas transaksi.
+                @endif
+            </p>
+        </div>
+        <span class="welcome-role">{{ $role }}</span>
     </div>
 
-    <div class="dashboard-grid">
-        <div class="dashboard-card">
-            <span class="card-label">Total Produk</span>
-            <h3>{{ number_format($metrics['products'], 0, ',', '.') }}</h3>
-            <p>Produk terdaftar</p>
-        </div>
-        <div class="dashboard-card">
-            <span class="card-label">Total Stok</span>
-            <h3>{{ number_format($metrics['stock'], 0, ',', '.') }}</h3>
-            <p>Unit seluruh produk</p>
-        </div>
-        <div class="dashboard-card dashboard-card-warning">
-            <span class="card-label">Stok Menipis</span>
-            <h3>{{ number_format($metrics['low_stock'], 0, ',', '.') }}</h3>
-            <p>Produk pada/bawah batas minimum</p>
-        </div>
-        <div class="dashboard-card">
-            <span class="card-label">Barang Masuk Hari Ini</span>
-            <h3>{{ number_format($metrics['today_in'], 0, ',', '.') }}</h3>
-            <p>Transaksi masuk</p>
-        </div>
-        <div class="dashboard-card">
-            <span class="card-label">Barang Keluar Hari Ini</span>
-            <h3>{{ number_format($metrics['today_out'], 0, ',', '.') }}</h3>
-            <p>Transaksi keluar</p>
-        </div>
-        <div class="dashboard-card">
-            <span class="card-label">Total Supplier</span>
-            <h3>{{ number_format($metrics['suppliers'], 0, ',', '.') }}</h3>
-            <p>Supplier terdaftar</p>
-        </div>
-        <div class="dashboard-card">
-            <span class="card-label">Total Pengguna</span>
-            <h3>{{ number_format($metrics['users'], 0, ',', '.') }}</h3>
-            <p>Akun sistem</p>
-        </div>
-        <div class="dashboard-card">
-            <span class="card-label">Jumlah Kategori</span>
-            <h3>{{ number_format($metrics['categories'], 0, ',', '.') }}</h3>
-            <p>Kategori produk</p>
-        </div>
+    <div class="dashboard-grid {{ $role === 'Kepala Logistik' ? 'dashboard-grid-logistics' : '' }}">
+        @foreach ($dashboardCards as $card)
+            <article class="dashboard-card {{ ($card['warning'] ?? false) ? 'dashboard-card-warning' : '' }}">
+                <div class="dashboard-stat-header">
+                    <span class="card-label">{{ $card['label'] }}</span>
+                    <span class="dashboard-stat-icon" aria-hidden="true">{{ $card['icon'] }}</span>
+                </div>
+                <h3>{{ number_format($metrics[$card['key']], 0, ',', '.') }}</h3>
+                <p>{{ $card['detail'] }}</p>
+            </article>
+        @endforeach
     </div>
 
+    @if ($role !== 'Kepala Logistik')
     <section class="section-panel dashboard-chart">
         <div class="section-heading">
             <div>
@@ -105,8 +116,9 @@
             @endforeach
         </div>
     </section>
+    @endif
 
-    @if (in_array(auth()->user()->role, ['Manager', 'Admin Prolog']))
+    @if (in_array($role, ['Manager', 'Admin Prolog']))
         <section class="section-panel dashboard-alerts">
             <div class="section-heading">
                 <div>
@@ -135,6 +147,35 @@
         </section>
     @endif
 
+    @if ($role === 'Kepala Logistik')
+        <section class="section-panel logistics-returns-panel">
+            <div class="section-heading">
+                <div>
+                    <h3>Pengajuan Retur yang Perlu Dipantau</h3>
+                    <p>Retur menunggu keputusan atau masih dalam proses pengiriman dan verifikasi.</p>
+                </div>
+                <a href="{{ route('warehouse.returns.index') }}" class="section-link">Lihat semua retur</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Nomor retur</th><th>Outlet</th><th>Jumlah item</th><th>Status</th><th>Diajukan</th></tr></thead>
+                    <tbody>
+                        @forelse ($recentReturns as $return)
+                            <tr>
+                                <td><strong>{{ $return->return_number }}</strong></td>
+                                <td>{{ $return->outlet->name }}</td>
+                                <td>{{ $return->items->count() }} produk</td>
+                                <td>{{ str_replace('_', ' ', ucfirst($return->status)) }}</td>
+                                <td>{{ $return->created_at->format('d/m/Y H:i') }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="5" class="empty-state">Tidak ada retur yang memerlukan tindak lanjut.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    @else
     <div class="dashboard-detail-grid">
         <section class="section-panel">
             <div class="section-heading">
@@ -142,6 +183,7 @@
                     <h3>Riwayat Barang Masuk</h3>
                     <p>Transaksi masuk terbaru.</p>
                 </div>
+                @endif
                 @if (in_array(auth()->user()->role, ['Manager', 'Admin Prolog']))
                     <a href="{{ route('stock-in.index') }}" class="section-link">Lihat semua</a>
                 @endif

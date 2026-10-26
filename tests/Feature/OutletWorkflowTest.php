@@ -35,6 +35,11 @@ class OutletWorkflowTest extends TestCase
 
         $order = OutletOrder::with('items')->firstOrFail();
         $orderItem = $order->items->firstOrFail();
+        $this->assertDatabaseHas('system_notifications', [
+            'event_key' => 'order-request:'.$order->id,
+            'category' => 'purchase_order',
+            'reference_number' => $order->order_number,
+        ]);
 
         $this->actingAs($manager)
             ->get(route('dashboard'))
@@ -51,6 +56,10 @@ class OutletWorkflowTest extends TestCase
 
         $this->post(route('warehouse.orders.dispatch', $order))
             ->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('system_notifications', [
+            'event_key' => 'order-dispatch:'.$order->id,
+            'category' => 'distribution',
+        ]);
         $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 15]);
         $this->assertDatabaseHas('stock_mutations', [
             'product_id' => $product->id,
@@ -59,7 +68,21 @@ class OutletWorkflowTest extends TestCase
             'from_location' => 'Gudang',
             'to_location' => $outlet->name,
         ]);
+        $this->assertDatabaseHas('workflow_status_histories', [
+            'subject_type' => OutletOrder::class,
+            'subject_id' => $order->id,
+            'from_status' => 'approved',
+            'to_status' => 'dispatched',
+            'user_id' => $manager->id,
+            'quantity' => 5,
+        ]);
         $this->assertDatabaseCount('stock_mutations', 1);
+        $this->get(route('distributions.index'))
+            ->assertOk()
+            ->assertSee($order->order_number)
+            ->assertSee('Dalam pengiriman')
+            ->assertSee('Lihat detail');
+        $this->assertDatabaseCount('outlet_stocks', 0);
 
         $this->post(route('warehouse.orders.dispatch', $order))
             ->assertSessionHasErrors('order');
@@ -69,16 +92,29 @@ class OutletWorkflowTest extends TestCase
         $this->actingAs($outletUser)
             ->post(route('outlet.orders.receipt', $order), [
                 'received' => [$orderItem->id => 4],
+                'damaged' => [$orderItem->id => 1],
+                'short' => [$orderItem->id => 1],
             ])
             ->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('system_notifications', [
+            'event_key' => 'receipt-submitted:'.$order->id,
+            'category' => 'distribution',
+        ]);
 
         $receipt = OutletReceipt::with('items')->firstOrFail();
         $receiptItem = $receipt->items->firstOrFail();
+        $this->assertSame(1, $receiptItem->damaged_quantity);
+        $this->assertSame(1, $receiptItem->short_quantity);
+        $this->assertDatabaseCount('outlet_stocks', 0);
         $this->actingAs($manager)
             ->post(route('warehouse.receipts.validate', $receipt), [
                 'validated' => [$receiptItem->id => 3],
             ])
             ->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('system_notifications', [
+            'event_key' => 'receipt-validated:'.$receipt->id,
+            'category' => 'distribution',
+        ]);
         $this->assertDatabaseHas('outlet_stocks', [
             'outlet_id' => $outlet->id,
             'product_id' => $product->id,
@@ -114,10 +150,15 @@ class OutletWorkflowTest extends TestCase
         $this->post(route('outlet.returns.store'), [
             'receipt_id' => $receipt->id,
             'items' => [$receiptItem->id => 1],
-            'reason' => 'Produk rusak saat diterima.',
+            'conditions' => [$receiptItem->id => 'packaging'],
+            'reason' => 'Kemasan rusak, isi produk masih layak.',
         ])->assertRedirect(route('outlet.returns.index'));
 
         $return = OutletReturn::with('items')->firstOrFail();
+        $this->assertDatabaseHas('system_notifications', [
+            'event_key' => 'return-request:'.$return->id,
+            'category' => 'return',
+        ]);
         $returnItem = $return->items->firstOrFail();
         $this->actingAs($manager)
             ->patch(route('warehouse.returns.review', $return), [
@@ -125,13 +166,49 @@ class OutletWorkflowTest extends TestCase
             ])
             ->assertSessionHasNoErrors();
 
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 15]);
+        $this->assertDatabaseHas('outlet_stocks', [
+            'outlet_id' => $outlet->id,
+            'product_id' => $product->id,
+            'quantity' => 2,
+        ]);
+
+        $this->actingAs($outletUser)
+            ->post(route('outlet.returns.dispatch', $return))
+            ->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('system_notifications', [
+            'event_key' => 'return-dispatch:'.$return->id,
+            'category' => 'return',
+        ]);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 15]);
+        $this->assertDatabaseHas('outlet_stocks', [
+            'outlet_id' => $outlet->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+        $this->post(route('outlet.returns.dispatch', $return))
+            ->assertSessionHasErrors('return');
+
+        $this->actingAs($manager);
         $this->post(route('warehouse.returns.verify', $return), [
             'verified' => [$returnItem->id => 1],
         ])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('system_notifications', [
+            'event_key' => 'return-verified:'.$return->id,
+            'category' => 'return',
+        ]);
         $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 16]);
         $this->assertDatabaseHas('outlet_stocks', [
             'outlet_id' => $outlet->id,
             'product_id' => $product->id,
+            'quantity' => 1,
+        ]);
+        $this->assertDatabaseHas('workflow_status_histories', [
+            'subject_type' => OutletReturn::class,
+            'subject_id' => $return->id,
+            'from_status' => 'dispatched',
+            'to_status' => 'verified',
+            'user_id' => $manager->id,
             'quantity' => 1,
         ]);
 
@@ -144,6 +221,34 @@ class OutletWorkflowTest extends TestCase
             'product_id' => $product->id,
             'quantity' => 1,
         ]);
+    }
+
+    public function test_rejected_orders_and_overstock_requests_do_not_change_warehouse_stock(): void
+    {
+        [$manager, $outletUser, , $product] = $this->makeInventory();
+
+        $this->actingAs($outletUser)
+            ->post(route('outlet.orders.store'), [
+                'items' => [['product_id' => $product->id, 'quantity' => 21]],
+            ])
+            ->assertSessionHasErrors('items');
+        $this->assertDatabaseCount('outlet_orders', 0);
+
+        $this->post(route('outlet.orders.store'), [
+            'items' => [['product_id' => $product->id, 'quantity' => 6]],
+        ])->assertRedirect(route('outlet.orders.index'));
+        $order = OutletOrder::firstOrFail();
+
+        $this->actingAs($manager)
+            ->patch(route('warehouse.orders.review', $order), [
+                'decision' => 'reject',
+                'decision_notes' => 'Stok dialokasikan untuk kebutuhan lain.',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 20]);
+        $this->assertDatabaseCount('stock_transactions', 0);
+        $this->assertDatabaseHas('outlet_orders', ['id' => $order->id, 'status' => 'rejected']);
     }
 
     public function test_outlet_login_redirects_to_its_own_portal_and_is_not_a_warehouse_user(): void
@@ -171,6 +276,8 @@ class OutletWorkflowTest extends TestCase
         ] as $routeName) {
             $this->get(route($routeName))->assertOk();
         }
+        $this->get(route('notifications.low-stock'))->assertForbidden();
+        $this->getJson(route('notifications.feed'))->assertForbidden();
     }
 
     private function makeInventory(): array

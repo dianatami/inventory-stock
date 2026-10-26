@@ -42,6 +42,14 @@ Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
 
+Route::get('/home', function (\Illuminate\Http\Request $request) {
+    $destination = $request->user()->role === 'User Outlet'
+        ? route('outlet.dashboard')
+        : route('dashboard');
+
+    return redirect()->to($destination);
+})->middleware('auth')->name('home');
+
 Route::middleware(['auth', 'role:Manager,Admin Prolog,Kepala Logistik'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::resource('categories', CategoryController::class)->except(['show']);
@@ -51,8 +59,6 @@ Route::middleware(['auth', 'role:Manager,Admin Prolog,Kepala Logistik'])->group(
         ->name('reports.daily');
     Route::get('/statistics', [StatisticsController::class, 'index'])
         ->name('statistics.index');
-    Route::get('/notifications/low-stock', [LowStockController::class, 'index'])
-        ->name('notifications.low-stock');
     Route::get('/settings', [SettingsController::class, 'index'])
         ->name('settings.index');
     Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])
@@ -80,10 +86,24 @@ Route::middleware(['auth', 'role:Manager'])->group(function () {
     Route::resource('products', ProductController::class);
 });
 
+Route::middleware(['auth', 'role:Manager,Admin Prolog,Kepala Logistik'])->group(function () {
+    Route::get('/notifications', [LowStockController::class, 'index'])
+        ->name('notifications.low-stock');
+    Route::get('/notifications/low-stock', fn () => redirect()->route('notifications.low-stock'))
+        ->name('notifications.low-stock.legacy');
+    Route::get('/notifications/feed', [LowStockController::class, 'feed'])
+        ->name('notifications.feed');
+    Route::patch('/notifications/{notification}/read', [LowStockController::class, 'markRead'])
+        ->name('notifications.read');
+    Route::patch('/notifications/activity/{notification}/read', [LowStockController::class, 'markActivityRead'])
+        ->name('notifications.activity.read');
+    Route::post('/notifications/read-all', [LowStockController::class, 'markAllRead'])
+        ->name('notifications.read-all');
+});
+
 Route::middleware(['auth', 'role:Manager,Admin Prolog'])->group(function () {
-    Route::get('/distributions', function () {
-        return redirect()->route('warehouse.receipts.index');
-    })->name('distributions.index');
+    Route::get('/distributions', [OrderManagementController::class, 'distributions'])
+        ->name('distributions.index');
 
     Route::get('/warehouse/orders', [OrderManagementController::class, 'index'])
         ->name('warehouse.orders.index');
@@ -147,6 +167,8 @@ Route::middleware(['auth', 'role:User Outlet'])->prefix('outlet')->name('outlet.
     Route::get('/returns', [OutletPortalController::class, 'returns'])->name('returns.index');
     Route::get('/returns/create', [OutletPortalController::class, 'createReturn'])->name('returns.create');
     Route::post('/returns', [OutletPortalController::class, 'storeReturn'])->name('returns.store');
+    Route::post('/returns/{return}/dispatch', [OutletPortalController::class, 'dispatchReturn'])
+        ->name('returns.dispatch');
     Route::get('/stocktake', [OutletPortalController::class, 'stocktake'])->name('stocktake');
     Route::post('/stocktake', [OutletPortalController::class, 'storeStocktake'])->name('stocktake.store');
     Route::get('/usage', [OutletPortalController::class, 'usage'])->name('usage.index');

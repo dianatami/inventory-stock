@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Models\Category;
+use App\Models\Product;
+use App\Models\StockTransaction;
 use App\Models\Supplier;
+use App\Services\LowStockNotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
@@ -19,7 +22,7 @@ class ProductController extends Controller
 
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%");
+                    ->orWhere('name', 'like', "%{$search}%");
             });
         }
 
@@ -56,7 +59,7 @@ class ProductController extends Controller
         ));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, LowStockNotificationService $notifications)
     {
         $validated = $request->validate([
             'code' => [
@@ -69,13 +72,32 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'unit' => 'required|string|max:30',
-            'stock' => 'required|integer|min:0',
+            'stock' => 'required|integer|min:0|max:4294967295',
             'minimum_stock' => 'required|integer|min:0',
             'description' => 'nullable|string',
             'is_active' => 'required|boolean',
         ]);
 
-        Product::create($validated);
+        DB::transaction(function () use ($validated, $request) {
+            $product = Product::create($validated);
+            $initialStock = (int) $validated['stock'];
+
+            if ($initialStock > 0) {
+                StockTransaction::create([
+                    'product_id' => $product->id,
+                    'user_id' => $request->user()->id,
+                    'type' => 'in',
+                    'quantity' => $initialStock,
+                    'stock_before' => 0,
+                    'stock_after' => $initialStock,
+                    'reference_number' => 'INITIAL-'.$product->code,
+                    'transaction_date' => now(),
+                    'notes' => 'Pencatatan stok awal saat produk dibuat',
+                ]);
+            }
+        });
+
+        $notifications->sync();
 
         return redirect()
             ->route('products.index')
@@ -94,8 +116,11 @@ class ProductController extends Controller
         ));
     }
 
-    public function update(Request $request, Product $product)
-    {
+    public function update(
+        Request $request,
+        Product $product,
+        LowStockNotificationService $notifications
+    ) {
         $validated = $request->validate([
             'code' => [
                 'required',
@@ -107,13 +132,14 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'unit' => 'required|string|max:30',
-            'stock' => 'required|integer|min:0',
+            'stock' => ['prohibited'],
             'minimum_stock' => 'required|integer|min:0',
             'description' => 'nullable|string',
             'is_active' => 'required|boolean',
         ]);
 
         $product->update($validated);
+        $notifications->sync();
 
         return redirect()
             ->route('products.index')

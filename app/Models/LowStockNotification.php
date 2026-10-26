@@ -8,12 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class LowStockNotification extends Model
 {
     protected $fillable = [
-        'product_id', 'current_stock', 'minimum_stock', 'notified_at', 'resolved_at',
+        'product_id', 'current_stock', 'minimum_stock', 'severity',
+        'notified_at', 'read_at', 'resolved_at',
     ];
 
     protected $casts = [
         'current_stock' => 'integer',
         'minimum_stock' => 'integer',
+        'read_at' => 'datetime',
         'notified_at' => 'datetime',
         'resolved_at' => 'datetime',
     ];

@@ -10,30 +10,56 @@ class LowStockNotificationService
 {
     public function sync(): void
     {
-        $lowProducts = Product::where('is_active', true)
-            ->whereColumn('stock', '<=', 'minimum_stock')
-            ->get(['id', 'stock', 'minimum_stock']);
-        $lowProductIds = $lowProducts->pluck('id');
+        DB::transaction(function () {
+            $lowProducts = Product::where('is_active', true)
+                ->whereColumn('stock', '<=', 'minimum_stock')
+                ->lockForUpdate()
+                ->get(['id', 'stock', 'minimum_stock']);
+            $lowProductIds = $lowProducts->modelKeys();
 
-        DB::transaction(function () use ($lowProducts, $lowProductIds) {
             foreach ($lowProducts as $product) {
-                $notification = LowStockNotification::firstOrNew([
-                    'product_id' => $product->id,
-                ]);
+                $severity = $this->severity((int) $product->stock, (int) $product->minimum_stock);
+                $notification = LowStockNotification::where('product_id', $product->id)
+                    ->whereNull('resolved_at')
+                    ->lockForUpdate()
+                    ->first();
 
-                if (! $notification->exists || $notification->resolved_at !== null) {
+                if (! $notification) {
+                    $notification = new LowStockNotification([
+                        'product_id' => $product->id,
+                        'notified_at' => now(),
+                    ]);
+                } elseif ($notification->severity !== $severity) {
                     $notification->notified_at = now();
-                    $notification->resolved_at = null;
+                    $notification->read_at = null;
                 }
 
                 $notification->current_stock = $product->stock;
                 $notification->minimum_stock = $product->minimum_stock;
+                $notification->severity = $severity;
                 $notification->save();
             }
 
-            LowStockNotification::whereNull('resolved_at')
-                ->whereNotIn('product_id', $lowProductIds)
+            $query = LowStockNotification::whereNull('resolved_at');
+            if ($lowProductIds !== []) {
+                $query->whereNotIn('product_id', $lowProductIds);
+            }
+
+            $query
                 ->update(['resolved_at' => now()]);
         });
+    }
+
+    private function severity(int $stock, int $minimum): string
+    {
+        if ($stock === 0) {
+            return 'out';
+        }
+
+        if ($minimum > 1 && $stock <= intdiv($minimum, 2)) {
+            return 'critical';
+        }
+
+        return 'low';
     }
 }

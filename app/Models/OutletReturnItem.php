@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class OutletReturnItem extends Model
 {
     protected $fillable = [
-        'outlet_return_id', 'product_id', 'requested_quantity', 'verified_quantity',
+        'outlet_return_id', 'product_id', 'requested_quantity',
+        'shipped_quantity', 'verified_quantity', 'condition', 'notes',
     ];
 
     protected $casts = [
         'requested_quantity' => 'integer',
+        'shipped_quantity' => 'integer',
         'verified_quantity' => 'integer',
     ];
 
