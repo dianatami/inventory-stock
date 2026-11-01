@@ -177,7 +177,7 @@
                                            class="user-action-btn edit"
                                            title="Edit pengguna"
                                            aria-label="Edit pengguna">
-                                            ✎
+                                            <svg class="interface-icon" aria-hidden="true"><use href="#icon-edit"/></svg>
                                         </a>
                                     @endif
 
@@ -194,7 +194,7 @@
                                                 class="user-action-btn status"
                                                 title="{{ $user->is_active ? 'Nonaktifkan pengguna' : 'Aktifkan pengguna' }}"
                                                 aria-label="Ubah status pengguna">
-                                                {{ $user->is_active ? '⏻' : '✓' }}
+                                                <svg class="interface-icon" aria-hidden="true"><use href="{{ $user->is_active ? '#icon-power' : '#icon-check-circle' }}"/></svg>
                                             </button>
                                         </form>
 
@@ -210,7 +210,7 @@
                                                 class="user-action-btn delete"
                                                 title="Hapus pengguna"
                                                 aria-label="Hapus pengguna">
-                                                🗑
+                                                <svg class="interface-icon" aria-hidden="true"><use href="#icon-trash"/></svg>
                                             </button>
                                         </form>
                                     @endif

@@ -11,8 +11,8 @@
         <tbody>
         @forelse ($outlets as $outlet)
             <tr><td>{{ $outlet->code }}</td><td><strong>{{ $outlet->name }}</strong></td><td>{{ $outlet->address ?? '-' }}</td><td>{{ $outlet->phone ?? '-' }}</td><td>{{ $outlet->user?->username ?? 'Belum terhubung' }}</td><td>{{ $outlet->is_active ? 'Aktif' : 'Nonaktif' }}</td>
-                <td><div class="user-action-buttons"><a class="user-action-btn edit" href="{{ route('outlets.edit', $outlet) }}" aria-label="Edit outlet">✎</a>
-                    <form method="POST" action="{{ route('outlets.destroy', $outlet) }}" onsubmit="return confirm('Hapus outlet ini? Outlet dengan riwayat tidak dapat dihapus.')">@csrf @method('DELETE')<button class="user-action-btn delete" type="submit" aria-label="Hapus outlet">×</button></form>
+                <td><div class="user-action-buttons"><a class="user-action-btn edit" href="{{ route('outlets.edit', $outlet) }}" aria-label="Edit outlet"><svg class="interface-icon" aria-hidden="true"><use href="#icon-edit"/></svg></a>
+                    <form method="POST" action="{{ route('outlets.destroy', $outlet) }}" onsubmit="return confirm('Hapus outlet ini? Outlet dengan riwayat tidak dapat dihapus.')">@csrf @method('DELETE')<button class="user-action-btn delete" type="submit" aria-label="Hapus outlet"><svg class="interface-icon" aria-hidden="true"><use href="#icon-trash"/></svg></button></form>
                 </div></td></tr>
         @empty<tr><td colspan="7" class="empty-state">Belum ada data outlet.</td></tr>@endforelse
         </tbody></table></div><div style="margin-top:16px">{{ $outlets->links() }}</div></div>

@@ -17,8 +17,8 @@
     @if (session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
 
     <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon">⇄</div><div><p>Total Mutasi</p><h2>{{ number_format($totalMutations, 0, ',', '.') }}</h2></div></div>
-        <div class="stat-card"><div class="stat-icon">▦</div><div><p>Total Unit Dipindahkan</p><h2>{{ number_format($totalQuantity, 0, ',', '.') }}</h2></div></div>
+        <div class="stat-card"><div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-arrows-left-right"/></svg></div><div><p>Total Mutasi</p><h2>{{ number_format($totalMutations, 0, ',', '.') }}</h2></div></div>
+        <div class="stat-card"><div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-package"/></svg></div><div><p>Total Unit Dipindahkan</p><h2>{{ number_format($totalQuantity, 0, ',', '.') }}</h2></div></div>
     </div>
 
     <div class="card">

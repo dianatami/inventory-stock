@@ -12,7 +12,7 @@
             <p>Periksa pembaruan stok dan aktivitas transaksi yang perlu diketahui.</p>
         </div>
         <div class="notification-page-actions">
-            <a class="btn btn-secondary" href="{{ route('notifications.low-stock', request()->query()) }}" aria-label="Muat ulang notifikasi">↻ Refresh</a>
+            <a class="btn btn-secondary" href="{{ route('notifications.low-stock', request()->query()) }}" aria-label="Muat ulang notifikasi"><svg class="interface-icon" aria-hidden="true"><use href="#icon-rotate"/></svg> Refresh</a>
             <form method="POST" action="{{ route('notifications.read-all') }}">
                 @csrf
                 <button class="btn btn-primary" type="submit">Tandai Semua Dibaca</button>
@@ -70,7 +70,7 @@
                             : route('notifications.activity.read', $notification['id']);
                     @endphp
                     <article class="notification-center-card tone-{{ $notification['tone'] }} {{ $notification['read'] ? '' : 'is-unread' }}">
-                        <div class="notification-center-icon" aria-hidden="true">{{ $notification['icon'] }}</div>
+                        <div class="notification-center-icon" aria-hidden="true"><svg class="interface-icon"><use href="#icon-{{ $notification['icon'] }}"/></svg></div>
                         <div class="notification-center-content">
                             <div class="notification-card-meta">
                                 <span class="notification-category-badge">{{ $notification['category_label'] }}</span>
@@ -88,7 +88,7 @@
                                 <span class="notification-read-state">{{ $notification['read'] ? 'Sudah dibaca' : 'Belum dibaca' }}</span>
                             </div>
                             <div class="notification-card-actions">
-                                <a href="{{ $notification['action_url'] }}">{{ $notification['action_label'] }} <span aria-hidden="true">→</span></a>
+                                <a href="{{ $notification['action_url'] }}">{{ $notification['action_label'] }} <svg class="interface-icon" aria-hidden="true"><use href="#icon-arrow-right"/></svg></a>
                                 @unless ($notification['read'])
                                     <form method="POST" action="{{ $readUrl }}">
                                         @csrf
@@ -101,7 +101,7 @@
                     </article>
                 @empty
                     <div class="notification-center-empty">
-                        <span aria-hidden="true">✓</span>
+                        <span aria-hidden="true"><svg class="interface-icon"><use href="#icon-check-circle"/></svg></span>
                         <h3>Tidak ada notifikasi</h3>
                         <p>Notifikasi yang sesuai dengan filter ini akan muncul di sini.</p>
                     </div>
@@ -112,7 +112,7 @@
 
         <aside class="notification-summary-column">
             <section class="notification-summary-card">
-                <div class="notification-summary-heading"><span>◉</span><div><h2>Ringkasan Alert Gudang</h2><p>Status yang memerlukan perhatian</p></div></div>
+                <div class="notification-summary-heading"><span><svg class="interface-icon" aria-hidden="true"><use href="#icon-alert"/></svg></span><div><h2>Ringkasan Alert Gudang</h2><p>Status yang memerlukan perhatian</p></div></div>
                 <div class="notification-summary-metrics">
                     <div><strong class="text-danger">{{ number_format($criticalCount, 0, ',', '.') }}</strong><span>Stok kritis / habis</span></div>
                     <div><strong>{{ number_format($pendingOrders, 0, ',', '.') }}</strong><span>Pemesanan menunggu</span></div>
@@ -122,7 +122,7 @@
 
             @if ($canViewStock)
                 <section class="notification-summary-card">
-                    <div class="notification-summary-heading"><span>↗</span><div><h2>Prioritas Restok</h2><p>Stok saat ini dibandingkan batas minimum</p></div></div>
+                    <div class="notification-summary-heading"><span><svg class="interface-icon" aria-hidden="true"><use href="#icon-chart"/></svg></span><div><h2>Prioritas Restok</h2><p>Stok saat ini dibandingkan batas minimum</p></div></div>
                     <div class="restock-priority-list">
                         @forelse ($restockPriorities as $product)
                             <div class="restock-priority-item">

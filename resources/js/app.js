@@ -123,8 +123,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const icon = document.createElement('span');
                 icon.className = `notification-item-icon ${notification.tone}`;
-                icon.textContent = notification.icon;
                 icon.setAttribute('aria-hidden', 'true');
+                const iconName = ['alert', 'shopping-cart', 'truck', 'rotate'].includes(notification.icon)
+                    ? notification.icon
+                    : 'alert';
+                const iconSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                const iconUse = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+                iconSvg.classList.add('interface-icon');
+                iconSvg.setAttribute('aria-hidden', 'true');
+                iconUse.setAttribute('href', `#icon-${iconName}`);
+                iconSvg.append(iconUse);
+                icon.append(iconSvg);
 
                 const content = document.createElement('div');
                 const title = document.createElement('strong');

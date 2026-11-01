@@ -36,7 +36,7 @@
 
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-icon">↓</div>
+            <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-arrow-down"/></svg></div>
             <div>
                 <p>Barang Masuk</p>
                 <h2>{{ number_format((int) $dailyStats->quantity_in, 0, ',', '.') }}</h2>
@@ -44,7 +44,7 @@
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">↑</div>
+            <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-arrow-up"/></svg></div>
             <div>
                 <p>Barang Keluar</p>
                 <h2>{{ number_format((int) $dailyStats->quantity_out, 0, ',', '.') }}</h2>
@@ -52,7 +52,7 @@
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">±</div>
+            <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-adjustments"/></svg></div>
             <div>
                 <p>Penyesuaian</p>
                 <h2>{{ number_format((int) $dailyStats->quantity_adjustment, 0, ',', '.') }}</h2>
@@ -60,7 +60,7 @@
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon">◷</div>
+            <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-calendar"/></svg></div>
             <div>
                 <p>Tanggal Laporan</p>
                 <h2 class="daily-report-date">{{ \Illuminate\Support\Carbon::parse($date)->translatedFormat('d F Y') }}</h2>

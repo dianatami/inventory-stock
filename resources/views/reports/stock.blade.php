@@ -19,22 +19,22 @@
     <div class="report-tabs">
         <a href="{{ route('reports.stock', ['tab' => 'products']) }}"
            class="report-tab {{ $tab === 'products' ? 'active' : '' }}">
-            ▣ Stok Produk
+            <svg class="interface-icon" aria-hidden="true"><use href="#icon-package"/></svg> Stok Produk
         </a>
 
         <a href="{{ route('reports.stock', ['tab' => 'in', 'date' => $date]) }}"
            class="report-tab {{ $tab === 'in' ? 'active' : '' }}">
-            ↓ Stok Masuk
+            <svg class="interface-icon" aria-hidden="true"><use href="#icon-arrow-down"/></svg> Stok Masuk
         </a>
 
         <a href="{{ route('reports.stock', ['tab' => 'out', 'date' => $date]) }}"
            class="report-tab {{ $tab === 'out' ? 'active' : '' }}">
-            ↑ Stok Keluar
+            <svg class="interface-icon" aria-hidden="true"><use href="#icon-arrow-up"/></svg> Stok Keluar
         </a>
 
         <a href="{{ route('reports.stock', ['tab' => 'adjustment', 'date' => $date]) }}"
            class="report-tab {{ $tab === 'adjustment' ? 'active' : '' }}">
-            ± Penyesuaian
+            <svg class="interface-icon" aria-hidden="true"><use href="#icon-adjustments"/></svg> Penyesuaian
         </a>
     </div>
 
@@ -43,7 +43,7 @@
         <div class="stats-grid">
 
             <div class="stat-card">
-                <div class="stat-icon">▤</div>
+                <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-layers"/></svg></div>
                 <div>
                     <p>Total Transaksi {{ $tab === 'in' ? 'Masuk' : ($tab === 'out' ? 'Keluar' : 'Penyesuaian') }}</p>
                     <h2>
@@ -53,7 +53,7 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon">{{ $tab === 'in' ? '↓' : '↑' }}</div>
+                <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="{{ $tab === 'in' ? '#icon-arrow-down' : ($tab === 'out' ? '#icon-arrow-up' : '#icon-adjustments') }}"/></svg></div>
                 <div>
                     <p>Total Kuantitas {{ $tab === 'in' ? 'Masuk' : ($tab === 'out' ? 'Keluar' : 'Disesuaikan') }}</p>
                     <h2>
@@ -63,7 +63,7 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon">⇄</div>
+                <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-arrows-left-right"/></svg></div>
                 <div>
                     <p>{{ $tab === 'adjustment' ? 'Stok Masuk − Keluar' : 'Net Flow Hari Ini' }}</p>
                     <h2>{{ number_format($dailyIn - $dailyOut, 0, ',', '.') }}</h2>
@@ -71,7 +71,7 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon">▦</div>
+                <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-calendar"/></svg></div>
                 <div>
                     <p>Tanggal Laporan</p>
                     <h2 style="font-size: 17px;">
@@ -129,7 +129,7 @@
                 <button type="button"
                         class="btn btn-secondary"
                         onclick="window.location.reload()">
-                    ↻ Refresh
+                    <svg class="interface-icon" aria-hidden="true"><use href="#icon-rotate"/></svg> Refresh
                 </button>
             </div>
         </form>

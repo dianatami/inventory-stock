@@ -7,29 +7,29 @@
     @php
         $dashboardCards = match ($role) {
             'Manager' => [
-                ['key' => 'products', 'label' => 'Total Produk', 'detail' => 'Produk terdaftar', 'icon' => '▣'],
-                ['key' => 'stock', 'label' => 'Total Stok', 'detail' => 'Unit seluruh produk', 'icon' => '▤'],
-                ['key' => 'low_stock', 'label' => 'Stok Menipis', 'detail' => 'Pada atau di bawah minimum', 'icon' => '⚠', 'warning' => true],
-                ['key' => 'today_in', 'label' => 'Barang Masuk Hari Ini', 'detail' => 'Transaksi masuk', 'icon' => '↓'],
-                ['key' => 'today_out', 'label' => 'Barang Keluar Hari Ini', 'detail' => 'Transaksi keluar', 'icon' => '↑'],
-                ['key' => 'suppliers', 'label' => 'Total Supplier', 'detail' => 'Supplier terdaftar', 'icon' => '♧'],
-                ['key' => 'users', 'label' => 'Total Pengguna', 'detail' => 'Akun sistem', 'icon' => '♙'],
-                ['key' => 'categories', 'label' => 'Jumlah Kategori', 'detail' => 'Kategori produk', 'icon' => '▦'],
+                ['key' => 'products', 'label' => 'Total Produk', 'detail' => 'Produk terdaftar', 'icon' => 'package'],
+                ['key' => 'stock', 'label' => 'Total Stok', 'detail' => 'Unit seluruh produk', 'icon' => 'layers'],
+                ['key' => 'low_stock', 'label' => 'Stok Menipis', 'detail' => 'Pada atau di bawah minimum', 'icon' => 'alert', 'warning' => true],
+                ['key' => 'today_in', 'label' => 'Barang Masuk Hari Ini', 'detail' => 'Transaksi masuk', 'icon' => 'arrow-down'],
+                ['key' => 'today_out', 'label' => 'Barang Keluar Hari Ini', 'detail' => 'Transaksi keluar', 'icon' => 'arrow-up'],
+                ['key' => 'suppliers', 'label' => 'Total Supplier', 'detail' => 'Supplier terdaftar', 'icon' => 'truck'],
+                ['key' => 'users', 'label' => 'Total Pengguna', 'detail' => 'Akun sistem', 'icon' => 'users'],
+                ['key' => 'categories', 'label' => 'Jumlah Kategori', 'detail' => 'Kategori produk', 'icon' => 'dashboard'],
             ],
             'Admin Prolog' => [
-                ['key' => 'products', 'label' => 'Total Produk', 'detail' => 'Produk terdaftar', 'icon' => '▣'],
-                ['key' => 'stock', 'label' => 'Total Stok Gudang', 'detail' => 'Unit seluruh produk', 'icon' => '▤'],
-                ['key' => 'low_stock', 'label' => 'Stok Menipis', 'detail' => 'Pada atau di bawah minimum', 'icon' => '⚠', 'warning' => true],
-                ['key' => 'today_in', 'label' => 'Barang Masuk Hari Ini', 'detail' => 'Transaksi masuk', 'icon' => '↓'],
-                ['key' => 'today_out', 'label' => 'Barang Keluar Hari Ini', 'detail' => 'Transaksi keluar', 'icon' => '↑'],
-                ['key' => 'pending_orders', 'label' => 'Pesanan Menunggu', 'detail' => 'Menunggu pemeriksaan', 'icon' => '⇢'],
-                ['key' => 'dispatched_orders', 'label' => 'Distribusi Berjalan', 'detail' => 'Pesanan sudah dikirim', 'icon' => '↗'],
-                ['key' => 'pending_receipts', 'label' => 'Penerimaan Menunggu', 'detail' => 'Menunggu validasi gudang', 'icon' => '✓'],
+                ['key' => 'products', 'label' => 'Total Produk', 'detail' => 'Produk terdaftar', 'icon' => 'package'],
+                ['key' => 'stock', 'label' => 'Total Stok Gudang', 'detail' => 'Unit seluruh produk', 'icon' => 'layers'],
+                ['key' => 'low_stock', 'label' => 'Stok Menipis', 'detail' => 'Pada atau di bawah minimum', 'icon' => 'alert', 'warning' => true],
+                ['key' => 'today_in', 'label' => 'Barang Masuk Hari Ini', 'detail' => 'Transaksi masuk', 'icon' => 'arrow-down'],
+                ['key' => 'today_out', 'label' => 'Barang Keluar Hari Ini', 'detail' => 'Transaksi keluar', 'icon' => 'arrow-up'],
+                ['key' => 'pending_orders', 'label' => 'Pesanan Menunggu', 'detail' => 'Menunggu pemeriksaan', 'icon' => 'shopping-cart'],
+                ['key' => 'dispatched_orders', 'label' => 'Distribusi Berjalan', 'detail' => 'Pesanan sudah dikirim', 'icon' => 'truck'],
+                ['key' => 'pending_receipts', 'label' => 'Penerimaan Menunggu', 'detail' => 'Menunggu validasi gudang', 'icon' => 'check-circle'],
             ],
             default => [
-                ['key' => 'pending_returns', 'label' => 'Retur Menunggu', 'detail' => 'Menunggu keputusan logistik', 'icon' => '↩', 'warning' => true],
-                ['key' => 'active_returns', 'label' => 'Retur dalam Proses', 'detail' => 'Disetujui atau dikirim outlet', 'icon' => '⇢'],
-                ['key' => 'returns_today', 'label' => 'Retur Diverifikasi Hari Ini', 'detail' => 'Selesai diperiksa gudang', 'icon' => '✓'],
+                ['key' => 'pending_returns', 'label' => 'Retur Menunggu', 'detail' => 'Menunggu keputusan logistik', 'icon' => 'rotate', 'warning' => true],
+                ['key' => 'active_returns', 'label' => 'Retur dalam Proses', 'detail' => 'Disetujui atau dikirim outlet', 'icon' => 'truck'],
+                ['key' => 'returns_today', 'label' => 'Retur Diverifikasi Hari Ini', 'detail' => 'Selesai diperiksa gudang', 'icon' => 'check-circle'],
             ],
         };
     @endphp
@@ -38,7 +38,7 @@
     @if ($newOrders->isNotEmpty())
         <dialog class="dashboard-order-modal" data-order-notification>
             <div class="dashboard-order-modal-content">
-                <button type="button" class="dashboard-order-modal-close" data-close-order-notification aria-label="Tutup">×</button>
+                <button type="button" class="dashboard-order-modal-close" data-close-order-notification aria-label="Tutup"><svg class="interface-icon" aria-hidden="true"><use href="#icon-close"/></svg></button>
                 <span class="dashboard-order-modal-label">PESANAN BARU DARI OUTLET</span>
                 <h2>{{ $newOrdersCount }} pesanan menunggu pemeriksaan</h2>
                 <p>Ada pesanan outlet yang belum diperiksa dan disetujui.</p>
@@ -80,7 +80,7 @@
             <article class="dashboard-card {{ ($card['warning'] ?? false) ? 'dashboard-card-warning' : '' }}">
                 <div class="dashboard-stat-header">
                     <span class="card-label">{{ $card['label'] }}</span>
-                    <span class="dashboard-stat-icon" aria-hidden="true">{{ $card['icon'] }}</span>
+                    <span class="dashboard-stat-icon" aria-hidden="true"><svg class="interface-icon"><use href="#icon-{{ $card['icon'] }}"/></svg></span>
                 </div>
                 <h3>{{ number_format($metrics[$card['key']], 0, ',', '.') }}</h3>
                 <p>{{ $card['detail'] }}</p>

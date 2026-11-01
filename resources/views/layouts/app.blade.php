@@ -43,6 +43,7 @@
     </style>
 </head>
 <body>
+    @include('components.icon-sprite')
     <div class="app-layout">
         <aside class="sidebar" id="sidebar" data-sidebar>
             <div class="sidebar-brand">
@@ -62,24 +63,24 @@
 
                 <a href="{{ route('dashboard') }}"
                    class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                    <span>▦</span> Dashboard
+                    <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-dashboard"/></svg></span> Dashboard
                 </a>
 
                 <p class="nav-heading">MASTER DATA</p>
 
                 <a href="{{ route('categories.index') }}"
                    class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}">
-                    <span>▤</span> Kategori
+                    <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-layers"/></svg></span> Kategori
                 </a>
 
                 @if (auth()->user()->role === 'Manager')
                     <a href="{{ route('suppliers.index') }}"
                        class="nav-link {{ request()->routeIs('suppliers.*') ? 'active' : '' }}">
-                        <span>♧</span> Supplier
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-truck"/></svg></span> Supplier
                     </a>
                     <a href="{{ route('products.index') }}"
                        class="nav-link {{ request()->routeIs('products.*') ? 'active' : '' }}">
-                        <span>▣</span> Produk
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-package"/></svg></span> Produk
                     </a>
                 @endif
 
@@ -88,42 +89,42 @@
 
                     <a href="{{ route('stock-in.index') }}"
                        class="nav-link {{ request()->routeIs('stock-in.*') ? 'active' : '' }}">
-                        <span>↓</span> Stok Masuk
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-arrow-down"/></svg></span> Stok Masuk
                     </a>
 
                     <a href="{{ route('stock-out.index') }}"
                        class="nav-link {{ request()->routeIs('stock-out.*') ? 'active' : '' }}">
-                        <span>↑</span> Stok Keluar
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-arrow-up"/></svg></span> Stok Keluar
                     </a>
 
                     <a href="{{ route('warehouse.orders.index') }}"
                        class="nav-link {{ request()->routeIs('warehouse.orders.*') ? 'active' : '' }}">
-                        <span>⇢</span> Pesanan Outlet
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-shopping-cart"/></svg></span> Pesanan Outlet
                     </a>
 
                     <a href="{{ route('distributions.index') }}"
                        class="nav-link {{ request()->routeIs('distributions.*') ? 'active' : '' }}">
-                        <span>↗</span> Distribusi Barang
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-truck"/></svg></span> Distribusi Barang
                     </a>
                     <a href="{{ route('warehouse.receipts.index') }}"
                        class="nav-link {{ request()->routeIs('warehouse.receipts.*') ? 'active' : '' }}">
-                        <span>✓</span> Validasi Penerimaan
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-check-circle"/></svg></span> Validasi Penerimaan
                     </a>
 
                     <a href="{{ route('stock-adjustments.index') }}"
                        class="nav-link {{ request()->routeIs('stock-adjustments.*') ? 'active' : '' }}">
-                        <span>±</span> Penyesuaian Stok
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-adjustments"/></svg></span> Penyesuaian Stok
                     </a>
 
                     <a href="{{ route('stock-mutations.index') }}"
                        class="nav-link {{ request()->routeIs('stock-mutations.*') ? 'active' : '' }}">
-                        <span>⇄</span> Mutasi Stok
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-arrows-left-right"/></svg></span> Mutasi Stok
                     </a>
                 @endif
                 @if (in_array(auth()->user()->role, ['Manager', 'Admin Prolog', 'Kepala Logistik']))
                     <a href="{{ route('warehouse.returns.index') }}"
                        class="nav-link {{ request()->routeIs('warehouse.returns.*') ? 'active' : '' }}">
-                        <span>↩</span> Retur Outlet
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-rotate"/></svg></span> Retur Outlet
                     </a>
                 @endif
 
@@ -131,32 +132,32 @@
 
                 <a href="{{ route('reports.stock') }}"
                    class="nav-link {{ request()->routeIs('reports.stock') ? 'active' : '' }}">
-                    <span>▥</span> Laporan Stok Keseluruhan
+                    <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-chart"/></svg></span> Laporan Stok Keseluruhan
                 </a>
 
                 <a href="{{ route('reports.daily') }}"
                    class="nav-link {{ request()->routeIs('reports.daily') ? 'active' : '' }}">
-                    <span>◷</span> Laporan Stok Harian
+                    <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-calendar"/></svg></span> Laporan Stok Harian
                 </a>
 
                 <a href="{{ route('statistics.index') }}"
                    class="nav-link {{ request()->routeIs('statistics.*') ? 'active' : '' }}">
-                    <span>▥</span> Statistik Data
+                    <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-chart"/></svg></span> Statistik Data
                 </a>
 
                 <p class="nav-heading">PENGATURAN</p>
                 <a href="{{ route('settings.index') }}"
                    class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
-                    <span>⚙</span> Pengaturan Profil
+                    <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-settings"/></svg></span> Pengaturan Profil
                 </a>
                 @if (auth()->user()->role === 'Manager')
                     <a href="{{ route('outlets.index') }}"
                        class="nav-link {{ request()->routeIs('outlets.*') ? 'active' : '' }}">
-                        <span>⌂</span> Data Outlet
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-store"/></svg></span> Data Outlet
                     </a>
                     <a href="{{ route('users.index') }}"
                        class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
-                        <span>♙</span> Manajemen Pengguna
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-users"/></svg></span> Manajemen Pengguna
                     </a>
                 @endif
             </nav>
@@ -175,7 +176,7 @@
                         aria-label="Ciutkan sidebar"
                         aria-controls="sidebar"
                         aria-expanded="true">
-                    ☰
+                    <svg class="interface-icon" aria-hidden="true"><use href="#icon-menu"/></svg>
                 </button>
 
                 <div class="topbar-title">
@@ -190,8 +191,8 @@
                              data-read-all="{{ route('notifications.read-all') }}">
                             <button type="button" class="notification-toggle" data-notification-toggle
                                     aria-label="Notifikasi" aria-expanded="false">
-                                <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8">
-                                    <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>
+                                <svg class="interface-icon" aria-hidden="true">
+                                    <use href="#icon-bell"/>
                                 </svg>
                                 <span class="notification-count" data-notification-count hidden>0</span>
                             </button>
@@ -215,7 +216,7 @@
                                     <span>{{ auth()->user()->role }}</span>
                                 </span>
                             </span>
-                            <span class="user-profile-chevron" aria-hidden="true">▼</span>
+                            <svg class="user-profile-chevron interface-icon" aria-hidden="true"><use href="#icon-chevron-down"/></svg>
                         </summary>
                         <div class="user-profile-dropdown">
                             <strong>{{ auth()->user()->name }}</strong>

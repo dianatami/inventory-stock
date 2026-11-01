@@ -11,12 +11,12 @@
     </div>
 
     <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon">▣</div><div><p>Total Produk</p><h2>{{ number_format($summary['products'], 0, ',', '.') }}</h2></div></div>
-        <div class="stat-card"><div class="stat-icon">▦</div><div><p>Total Persediaan</p><h2>{{ number_format($summary['stock'], 0, ',', '.') }}</h2></div></div>
-        <div class="stat-card"><div class="stat-icon">!</div><div><p>Stok Menipis</p><h2>{{ number_format($summary['low_stock'], 0, ',', '.') }}</h2></div></div>
-        <div class="stat-card"><div class="stat-icon">▤</div><div><p>Kategori</p><h2>{{ number_format($summary['categories'], 0, ',', '.') }}</h2></div></div>
-        <div class="stat-card"><div class="stat-icon">♧</div><div><p>Supplier</p><h2>{{ number_format($summary['suppliers'], 0, ',', '.') }}</h2></div></div>
-        <div class="stat-card"><div class="stat-icon">♙</div><div><p>Pengguna Aktif</p><h2>{{ number_format($summary['users'], 0, ',', '.') }}</h2></div></div>
+        <div class="stat-card"><div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-package"/></svg></div><div><p>Total Produk</p><h2>{{ number_format($summary['products'], 0, ',', '.') }}</h2></div></div>
+        <div class="stat-card"><div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-layers"/></svg></div><div><p>Total Persediaan</p><h2>{{ number_format($summary['stock'], 0, ',', '.') }}</h2></div></div>
+        <div class="stat-card"><div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-alert"/></svg></div><div><p>Stok Menipis</p><h2>{{ number_format($summary['low_stock'], 0, ',', '.') }}</h2></div></div>
+        <div class="stat-card"><div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-dashboard"/></svg></div><div><p>Kategori</p><h2>{{ number_format($summary['categories'], 0, ',', '.') }}</h2></div></div>
+        <div class="stat-card"><div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-truck"/></svg></div><div><p>Supplier</p><h2>{{ number_format($summary['suppliers'], 0, ',', '.') }}</h2></div></div>
+        <div class="stat-card"><div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-users"/></svg></div><div><p>Pengguna Aktif</p><h2>{{ number_format($summary['users'], 0, ',', '.') }}</h2></div></div>
     </div>
 
     <section class="section-panel dashboard-chart">

@@ -39,7 +39,7 @@
     {{-- KARTU STATISTIK --}}
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-icon">▤</div>
+            <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-layers"/></svg></div>
             <div>
                 <p>Total Transaksi</p>
                 <h2>{{ number_format($totalTransactions, 0, ',', '.') }}</h2>
@@ -47,7 +47,7 @@
         </div>
 
         <div class="stat-card">
-            <div class="stat-icon">◷</div>
+            <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-clock"/></svg></div>
             <div>
                 <p>{{ $pageType }} Hari Ini</p>
                 <h2>{{ number_format($todayTransactions, 0, ',', '.') }}</h2>
@@ -55,7 +55,7 @@
         </div>
 
         <div class="stat-card">
-            <div class="stat-icon">▦</div>
+            <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-calendar"/></svg></div>
             <div>
                 <p>{{ $pageType }} Bulan Ini</p>
                 <h2>{{ number_format($monthTransactions, 0, ',', '.') }}</h2>
@@ -63,7 +63,7 @@
         </div>
 
         <div class="stat-card">
-            <div class="stat-icon">{{ $type === 'in' ? '↓' : '↑' }}</div>
+            <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="{{ $type === 'in' ? '#icon-arrow-down' : '#icon-arrow-up' }}"/></svg></div>
             <div>
                 <p>Total Qty {{ $type === 'in' ? 'Masuk' : 'Keluar' }}</p>
                 <h2>{{ number_format($totalQuantity, 0, ',', '.') }}</h2>
