@@ -3,13 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Models\Supplier;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $suppliers = Supplier::latest()->paginate(10);
+        $query = Supplier::query();
+
+        $search = trim((string) $request->input('search', ''));
+        if ($search !== '') {
+            $query->where(function (Builder $query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('company_name', 'like', "%{$search}%")
+                    ->orWhere('whatsapp', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $suppliers = $query->latest()->paginate(10)->withQueryString();
 
         return view('suppliers.index', compact('suppliers'));
     }

@@ -17,12 +17,18 @@ class ProductController extends Controller
     {
         $query = Product::with(['category', 'supplier']);
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-
+        $search = trim((string) $request->input('search', ''));
+        if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
-                    ->orWhere('name', 'like', "%{$search}%");
+                    ->orWhere('name', 'like', "%{$search}%")
+                    ->orWhereHas('category', function ($categoryQuery) use ($search) {
+                        $categoryQuery->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('supplier', function ($supplierQuery) use ($search) {
+                        $supplierQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('company_name', 'like', "%{$search}%");
+                    });
             });
         }
 

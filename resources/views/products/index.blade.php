@@ -47,7 +47,7 @@
                 id="search"
                 name="search"
                 value="{{ request('search') }}"
-                placeholder="Cari kode atau nama produk..."
+                placeholder="Kode, nama, kategori, atau supplier..."
             >
         </div>
 

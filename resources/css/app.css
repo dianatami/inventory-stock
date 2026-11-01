@@ -4045,3 +4045,23 @@ table.table tbody tr:hover td,
         border-radius: 14px;
     }
 }
+
+.supplier-whatsapp-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #16834b;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.supplier-whatsapp-link .interface-icon {
+    width: 17px;
+    height: 17px;
+}
+
+.supplier-whatsapp-link:hover {
+    color: #11683c;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}

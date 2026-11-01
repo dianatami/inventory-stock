@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\StockTransaction;
+use App\Models\Supplier;
 use App\Models\SystemNotification;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -48,6 +49,52 @@ class WarehouseFeaturesTest extends TestCase
             'name' => 'Supplier Uji',
             'whatsapp' => '081234567890',
         ]);
+
+        $this->get(route('suppliers.index'))
+            ->assertOk()
+            ->assertSee('href="https://wa.me/6281234567890"', false)
+            ->assertSee('081234567890');
+
+        Supplier::create([
+            'name' => 'Supplier Lain',
+            'company_name' => 'PT Contoh',
+        ]);
+
+        $this->get(route('suppliers.index', ['search' => 'Supplier Uji']))
+            ->assertOk()
+            ->assertSee('Supplier Uji')
+            ->assertDontSee('Supplier Lain');
+    }
+
+    public function test_product_search_matches_supplier_and_product_details(): void
+    {
+        [$user, $product] = $this->createManagerAndProduct(10);
+        $supplier = Supplier::create([
+            'name' => 'Supplier Beras Prima',
+            'company_name' => 'PT Beras Prima',
+        ]);
+        $product->update(['supplier_id' => $supplier->id]);
+
+        Product::create([
+            'code' => 'WH-002',
+            'name' => 'Gula',
+            'category_id' => $product->category_id,
+            'unit' => 'kg',
+            'stock' => 5,
+            'minimum_stock' => 2,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('products.index', ['search' => 'Beras Prima']))
+            ->assertOk()
+            ->assertSee('Beras')
+            ->assertDontSee('Gula');
+
+        $this->get(route('products.index', ['search' => 'WH-002']))
+            ->assertOk()
+            ->assertSee('Gula')
+            ->assertDontSee('Beras');
     }
 
     public function test_stock_adjustment_sets_physical_count_and_records_difference(): void
