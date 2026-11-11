@@ -54,6 +54,9 @@
     <symbol id="icon-alert" viewBox="0 0 24 24">
         <path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v5m0 3h.01"/>
     </symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24">
+        <circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/>
+    </symbol>
     <symbol id="icon-bell" viewBox="0 0 24 24">
         <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>
     </symbol>

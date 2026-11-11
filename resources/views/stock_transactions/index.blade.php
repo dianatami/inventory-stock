@@ -1,7 +1,7 @@
 
 @extends('layouts.app')
 
-@section('title', $pageType . ' - OMPROF')
+@section('title', $pageType . ' - MieTime Logistik')
 @section('page-title', $pageType)
 
 @section('content')
@@ -65,7 +65,7 @@
         <div class="stat-card">
             <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="{{ $type === 'in' ? '#icon-arrow-down' : '#icon-arrow-up' }}"/></svg></div>
             <div>
-                <p>Total Qty {{ $type === 'in' ? 'Masuk' : 'Keluar' }}</p>
+                <p>{{ $type === 'in' ? 'Total Barang Diterima' : 'Total Barang Dikirim' }}</p>
                 <h2>{{ number_format($totalQuantity, 0, ',', '.') }}</h2>
             </div>
         </div>
@@ -131,7 +131,7 @@
                         <th>Tanggal</th>
                         <th>Produk</th>
                         <th>Supplier</th>
-                        <th>Jumlah</th>
+                        <th>{{ $type === 'in' ? 'Barang Diterima' : 'Barang Dikirim' }}</th>
                         <th>Stok Sebelum</th>
                         <th>Stok Sesudah</th>
                         <th>Pengguna</th>

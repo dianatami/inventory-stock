@@ -1,24 +1,24 @@
 @extends('layouts.app')
 
-@section('title', 'Mutasi Stok')
-@section('page-title', 'Mutasi Stok')
+@section('title', 'Riwayat Distribusi - MieTime Logistik')
+@section('page-title', 'Riwayat Distribusi')
 
 @section('content')
 <div class="container">
     <div class="page-header">
         <div>
-            <h1>Mutasi Stok</h1>
-            <p>Catatan perpindahan stok dari gudang ke outlet, tersinkron dengan distribusi barang.</p>
+            <h1>Riwayat Distribusi</h1>
+            <p>Riwayat perpindahan barang dari gudang ke outlet berdasarkan transaksi pengiriman yang tersimpan.</p>
         </div>
-        <a href="{{ route('warehouse.receipts.index') }}" class="btn btn-primary">Buka Distribusi Barang</a>
+        <a href="{{ route('distributions.index') }}" class="btn btn-primary">Buka Distribusi Barang</a>
     </div>
 
     @if (session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
     @if (session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
 
     <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-arrows-left-right"/></svg></div><div><p>Total Mutasi</p><h2>{{ number_format($totalMutations, 0, ',', '.') }}</h2></div></div>
-        <div class="stat-card"><div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-package"/></svg></div><div><p>Total Unit Dipindahkan</p><h2>{{ number_format($totalQuantity, 0, ',', '.') }}</h2></div></div>
+        <div class="stat-card"><div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-arrows-left-right"/></svg></div><div><p>Baris Barang Dikirim</p><h2>{{ number_format($totalMutations, 0, ',', '.') }}</h2></div></div>
+        <div class="stat-card"><div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-package"/></svg></div><div><p>Total Unit Dikirim</p><h2>{{ number_format($totalQuantity, 0, ',', '.') }}</h2></div></div>
     </div>
 
     <div class="card">
@@ -33,14 +33,14 @@
     </div>
 
     <div class="card">
-        <div class="page-header"><div><h2>Riwayat Mutasi Antar Lokasi</h2></div><span class="badge">{{ $mutations->total() }} mutasi</span></div>
+        <div class="page-header"><div><h2>Barang Dikirim ke Outlet</h2></div><span class="badge">{{ $mutations->total() }} baris barang</span></div>
         <div class="table-responsive">
             <table class="table">
-                <thead><tr><th>No.</th><th>Tanggal</th><th>Produk</th><th>Dari lokasi</th><th>Ke lokasi</th><th>Jumlah</th><th>Status</th><th>Petugas</th><th>Catatan</th></tr></thead>
+                <thead><tr><th>No. pesanan</th><th>Tanggal kirim</th><th>Produk</th><th>Dari lokasi</th><th>Ke outlet</th><th>Jumlah dikirim</th><th>Status</th><th>Petugas</th><th>Catatan</th></tr></thead>
                 <tbody>
                     @forelse ($mutations as $mutation)
                         <tr>
-                            <td>{{ $mutations->firstItem() + $loop->index }}</td>
+                            <td><strong>{{ $mutation->outletOrderItem?->order?->order_number ?? '-' }}</strong></td>
                             <td>{{ $mutation->mutation_date->format('d M Y H:i') }}</td>
                             <td><strong>{{ $mutation->product?->name ?? 'Produk tidak tersedia' }}</strong><br><small>{{ $mutation->product?->code }}</small></td>
                             <td>{{ $mutation->from_location }}</td>

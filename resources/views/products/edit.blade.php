@@ -114,7 +114,7 @@
 
         <div class="form-group">
             <label>Stok Saat Ini</label>
-            <p>{{ number_format($product->stock, 0, ',', '.') }} {{ $product->unit }}. Gunakan menu Stok Masuk, Stok Keluar, atau Penyesuaian Stok untuk mengubah saldo.</p>
+            <p>{{ number_format($product->stock, 0, ',', '.') }} {{ $product->unit }}. Perubahan saldo dicatat melalui transaksi Stok Masuk atau Stok Keluar.</p>
         </div>
 
         <div class="form-group">

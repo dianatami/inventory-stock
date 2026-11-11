@@ -7,7 +7,7 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## Sistem Inventori TPN
+## Sistem Informasi Inventori dan Distribusi MieTime Logistik
 
 Aplikasi ini menyediakan dashboard gudang dan portal User Outlet dengan pemisahan stok gudang dan stok outlet. Database aplikasi menggunakan `db_inventori_distribusi`; database lama tidak dihapus.
 
@@ -18,7 +18,7 @@ Aplikasi ini menyediakan dashboard gudang dan portal User Outlet dengan pemisaha
 3. Jalankan `npm install` lalu `npm run build`, kemudian buka virtual host Laragon atau mulai aplikasi menggunakan `php artisan serve`.
 4. Masuk sebagai Manager, buat outlet pada menu **Data Outlet**, lalu buat akun **User Outlet** dari **Manajemen Pengguna** dan hubungkan ke outlet.
 
-Halaman login tersedia di `/` (route bernama `login`). Dashboard gudang tersedia di `/dashboard`; portal User Outlet tersedia di `/outlet/dashboard`. URL `/home` merupakan alias terlindungi autentikasi yang meneruskan pengguna ke dashboard sesuai role.
+Halaman login tersedia di `/` (route bernama `login`). Akun Manager awal menggunakan username `mietime01`; migrasi username tidak mengubah password yang sudah tersimpan. Dashboard gudang tersedia di `/dashboard`; portal User Outlet tersedia di `/outlet/dashboard`. URL `/home` merupakan alias terlindungi autentikasi yang meneruskan pengguna ke dashboard sesuai role.
 
 Alur pesanan, pengiriman, validasi penerimaan, retur, stok opname, dan laporan barang terpakai tersedia pada menu masing-masing. Pengiriman mengurangi stok gudang, sedangkan validasi penerimaan menambah stok outlet.
 
@@ -29,6 +29,8 @@ Ubah password awal Manager segera setelah login pertama.
 Outlet hanya dapat mengajukan jumlah yang tersedia saat pesanan dibuat. Admin Prolog memeriksa stok lagi sebelum menyetujui dan saat mengirim; stok gudang baru berkurang ketika pengiriman dikonfirmasi. Stok outlet baru bertambah setelah penerimaan divalidasi gudang. Untuk retur, outlet mengirim barang setelah persetujuan; stok outlet berkurang saat pengiriman retur dan stok gudang hanya bertambah untuk jumlah yang dinyatakan layak setelah pemeriksaan fisik.
 
 Perubahan status pesanan, penerimaan, dan retur dicatat bersama pengguna, waktu, jumlah, serta catatan. Stok awal produk juga dicatat sebagai transaksi masuk; saldo stok tidak dapat diedit dari formulir edit produk.
+
+Riwayat distribusi berasal dari pesanan outlet yang benar-benar telah dikirim dan menyediakan surat jalan siap cetak A4. Manager memiliki rekap pesanan lintas outlet. Kepala Logistik dapat mengajukan permintaan barang tanpa mengubah saldo stok; Admin Prolog memperbarui status permintaan setelah diproses.
 
 Notifikasi stok dan aktivitas transaksi pada lonceng navbar mengambil kondisi dari database. Pemeriksaan stok berjalan setelah transaksi stok berhasil, saat feed dimuat, dan setiap 60 detik selama halaman aktif. Untuk pemeriksaan berkala saat tidak ada halaman yang terbuka, jalankan `php artisan schedule:work` di terminal Laragon terpisah; scheduler menjalankan `notifications:sync-stock` setiap menit. Pusat notifikasi tersedia di `/notifications`. Batas kritis ditetapkan pada stok positif yang sama dengan atau di bawah setengah batas minimum (dibulatkan ke bawah); stok nol ditandai habis. Notifikasi internal ini tidak mengirim pesan WhatsApp. Pengguna Laragon yang memperbarui aplikasi perlu menjalankan `php artisan migrate` setelah mencadangkan database, lalu `npm run build` untuk membangun aset frontend. Tes otomatis dapat dijalankan dengan `php artisan test`.
 

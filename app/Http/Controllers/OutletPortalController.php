@@ -74,7 +74,7 @@ class OutletPortalController extends Controller
     public function orders(Request $request)
     {
         $outlet = $this->outlet($request);
-        $orders = OutletOrder::with(['items.product', 'receipt', 'statusHistory.user'])
+        $orders = OutletOrder::with(['items.product', 'receipt'])
             ->where('outlet_id', $outlet->id)
             ->latest()
             ->paginate(15)
@@ -161,7 +161,7 @@ class OutletPortalController extends Controller
             'purchase_order',
             'Pesanan '.$order->order_number.' menunggu persetujuan',
             'Pesanan baru dari '.$outlet->name.' menunggu pemeriksaan dan persetujuan.',
-            ['Manager', 'Admin Prolog'],
+            ['Admin Prolog'],
             'order',
             $order->id,
             $order->order_number
@@ -278,7 +278,7 @@ class OutletPortalController extends Controller
             'distribution',
             'Penerimaan '.$order->order_number.' menunggu validasi',
             'Outlet '.$outlet->name.' mengonfirmasi penerimaan pesanan dan menunggu pemeriksaan gudang.',
-            ['Manager', 'Admin Prolog'],
+            ['Admin Prolog', 'Kepala Logistik'],
             'order',
             $order->id,
             $order->order_number

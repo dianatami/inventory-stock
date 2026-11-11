@@ -1,8 +1,8 @@
 @extends('layouts.outlet')
-@section('title', 'Ajukan Retur - TPN')
+@section('title', 'Retur Barang - MieTime')
 @section('page-title', 'Ajukan Retur')
 @section('content')
-<div class="outlet-page-head"><div><h1>Ajukan Retur Barang</h1><p>Jumlah retur tidak boleh melebihi barang yang telah divalidasi diterima maupun stok outlet saat ini.</p></div><a href="{{ route('outlet.returns.index') }}" class="btn" style="background:#6b625d">Kembali</a></div>
+<div class="outlet-page-head"><div><h1>Ajukan Retur Barang</h1></div><a href="{{ route('outlet.returns.index') }}" class="btn" style="background:#6b625d">Kembali</a></div>
 @forelse ($receipts as $receipt)
 <section class="outlet-panel">
     <h2 style="font-size:18px">Penerimaan {{ $receipt->order->order_number }} · {{ $receipt->validated_at?->format('d/m/Y') }}</h2>

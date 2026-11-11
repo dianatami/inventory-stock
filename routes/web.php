@@ -4,14 +4,16 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LowStockController;
+use App\Http\Controllers\LogisticsRequestController;
 use App\Http\Controllers\OrderManagementController;
 use App\Http\Controllers\OutletController;
+use App\Http\Controllers\OutletOrderRecapController;
 use App\Http\Controllers\OutletPortalController;
+use App\Http\Controllers\OutletReportController;
 use App\Http\Controllers\OutletReturnManagementController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\StatisticsController;
-use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\StockMutationController;
 use App\Http\Controllers\StockReportController;
 use App\Http\Controllers\StockTransactionController;
@@ -55,14 +57,32 @@ Route::middleware(['auth', 'role:Manager,Admin Prolog,Kepala Logistik'])->group(
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::get('/reports/stock', [StockReportController::class, 'index'])
         ->name('reports.stock');
-    Route::get('/reports/daily', [StockReportController::class, 'daily'])
-        ->name('reports.daily');
-    Route::get('/statistics', [StatisticsController::class, 'index'])
-        ->name('statistics.index');
     Route::get('/settings', [SettingsController::class, 'index'])
         ->name('settings.index');
     Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])
         ->name('settings.profile.update');
+});
+
+Route::middleware(['auth', 'role:Manager,Admin Prolog'])->group(function () {
+    Route::get('/reports/daily', [StockReportController::class, 'daily'])
+        ->name('reports.daily');
+});
+
+Route::middleware(['auth', 'role:Manager,Admin Prolog'])->group(function () {
+    Route::get('/statistics', [StatisticsController::class, 'index'])
+        ->name('statistics.index');
+});
+
+Route::middleware(['auth', 'role:Manager'])->group(function () {
+    Route::get('/outlet-orders/recap', [OutletOrderRecapController::class, 'index'])
+        ->name('orders.recap.index');
+    Route::get('/outlet-orders/recap/{order}', [OutletOrderRecapController::class, 'show'])
+        ->name('orders.recap.show');
+});
+
+Route::middleware(['auth', 'role:Manager,Kepala Logistik'])->group(function () {
+    Route::get('/reports/outlets', [OutletReportController::class, 'index'])
+        ->name('reports.outlets');
 });
 
 Route::middleware(['auth', 'role:Manager'])->group(function () {
@@ -81,9 +101,9 @@ Route::middleware(['auth', 'role:Manager'])->group(function () {
     )->name('users.toggle-status');
 });
 
-Route::middleware(['auth', 'role:Manager'])->group(function () {
-    Route::resource('suppliers', SupplierController::class);
-    Route::resource('products', ProductController::class);
+Route::middleware(['auth', 'role:Manager,Admin Prolog,Kepala Logistik'])->group(function () {
+    Route::resource('suppliers', SupplierController::class)->except(['show']);
+    Route::resource('products', ProductController::class)->except(['show']);
 });
 
 Route::middleware(['auth', 'role:Manager,Admin Prolog,Kepala Logistik'])->group(function () {
@@ -101,28 +121,36 @@ Route::middleware(['auth', 'role:Manager,Admin Prolog,Kepala Logistik'])->group(
         ->name('notifications.read-all');
 });
 
-Route::middleware(['auth', 'role:Manager,Admin Prolog'])->group(function () {
-    Route::get('/distributions', [OrderManagementController::class, 'distributions'])
-        ->name('distributions.index');
-
+Route::middleware(['auth', 'role:Manager,Admin Prolog,Kepala Logistik'])->group(function () {
     Route::get('/warehouse/orders', [OrderManagementController::class, 'index'])
         ->name('warehouse.orders.index');
+});
+
+Route::middleware(['auth', 'role:Admin Prolog'])->group(function () {
     Route::patch('/warehouse/orders/{order}/review', [OrderManagementController::class, 'review'])
         ->name('warehouse.orders.review');
+});
+
+Route::middleware(['auth', 'role:Kepala Logistik'])->group(function () {
     Route::post('/warehouse/orders/{order}/dispatch', [OrderManagementController::class, 'dispatch'])
         ->name('warehouse.orders.dispatch');
+});
+
+Route::middleware(['auth', 'role:Manager,Admin Prolog,Kepala Logistik'])->group(function () {
     Route::get('/warehouse/receipts', [OrderManagementController::class, 'receipts'])
         ->name('warehouse.receipts.index');
+});
+
+Route::middleware(['auth', 'role:Admin Prolog,Kepala Logistik'])->group(function () {
     Route::post('/warehouse/receipts/{receipt}/validate', [OrderManagementController::class, 'validateReceipt'])
         ->name('warehouse.receipts.validate');
+});
 
-    Route::get('/stock-adjustments', [StockAdjustmentController::class, 'index'])
-        ->name('stock-adjustments.index');
-    Route::get('/stock-adjustments/create', [StockAdjustmentController::class, 'create'])
-        ->name('stock-adjustments.create');
-    Route::post('/stock-adjustments', [StockAdjustmentController::class, 'store'])
-        ->name('stock-adjustments.store');
-
+Route::middleware(['auth', 'role:Manager,Admin Prolog,Kepala Logistik'])->group(function () {
+    Route::get('/distributions', [OrderManagementController::class, 'distributions'])
+        ->name('distributions.index');
+    Route::get('/distributions/{order}/waybill', [OrderManagementController::class, 'waybill'])
+        ->name('distributions.waybill');
     Route::get('/stock-in', [StockTransactionController::class, 'stockIn'])
         ->name('stock-in.index');
     Route::get('/stock-in/create', [StockTransactionController::class, 'createStockIn'])
@@ -139,6 +167,25 @@ Route::middleware(['auth', 'role:Manager,Admin Prolog'])->group(function () {
 
     Route::get('/stock-mutations', [StockMutationController::class, 'index'])
         ->name('stock-mutations.index');
+});
+
+Route::middleware(['auth', 'role:Kepala Logistik'])->group(function () {
+    Route::get('/logistics-requests/create', [LogisticsRequestController::class, 'create'])
+        ->name('logistics-requests.create');
+    Route::post('/logistics-requests', [LogisticsRequestController::class, 'store'])
+        ->name('logistics-requests.store');
+});
+
+Route::middleware(['auth', 'role:Admin Prolog,Kepala Logistik'])->group(function () {
+    Route::get('/logistics-requests', [LogisticsRequestController::class, 'index'])
+        ->name('logistics-requests.index');
+    Route::get('/logistics-requests/{logisticsRequest}', [LogisticsRequestController::class, 'show'])
+        ->name('logistics-requests.show');
+});
+
+Route::middleware(['auth', 'role:Admin Prolog'])->group(function () {
+    Route::patch('/logistics-requests/{logisticsRequest}/status', [LogisticsRequestController::class, 'updateStatus'])
+        ->name('logistics-requests.status');
 });
 
 Route::middleware(['auth', 'role:Manager,Admin Prolog,Kepala Logistik'])->group(function () {

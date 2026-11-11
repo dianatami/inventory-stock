@@ -1,8 +1,8 @@
 @extends('layouts.outlet')
-@section('title', 'Laporan Data Stok - TPN')
+@section('title', 'Laporan Data Stok - MieTime')
 @section('page-title', 'Laporan Data Stok')
 @section('content')
-<div class="outlet-page-head"><div><h1>Persediaan Outlet</h1><p>Stok gudang dan stok outlet dicatat secara terpisah.</p></div></div>
+<div class="outlet-page-head"><div><h1>Persediaan Outlet</h1></div></div>
 <section class="outlet-panel">
     <form method="GET" action="{{ route('outlet.stocks.index') }}" class="outlet-form-grid" style="margin-bottom:16px">
         <div class="outlet-field"><label for="search">Cari produk</label><input id="search" name="search" value="{{ request('search') }}" placeholder="Nama atau kode produk"></div>

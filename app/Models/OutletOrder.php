@@ -13,7 +13,7 @@ class OutletOrder extends Model
     protected $fillable = [
         'order_number', 'outlet_id', 'user_id', 'status', 'notes',
         'decision_notes', 'reviewed_by', 'reviewed_at', 'dispatched_at',
-        'dispatched_by',
+        'dispatched_by', 'driver_name',
     ];
 
     protected $casts = ['reviewed_at' => 'datetime', 'dispatched_at' => 'datetime'];

@@ -17,6 +17,14 @@ class Outlet extends Model
         return $this->hasOne(User::class);
     }
 
+    public function getBranchDisplayNameAttribute(): string
+    {
+        $name = trim($this->name);
+        $withoutBrand = trim(preg_replace('/^mie\s*time\s*/i', '', $name) ?? $name);
+
+        return $withoutBrand === '' ? 'MieTime' : 'MieTime '.$withoutBrand;
+    }
+
     public function stocks(): HasMany
     {
         return $this->hasMany(OutletStock::class);

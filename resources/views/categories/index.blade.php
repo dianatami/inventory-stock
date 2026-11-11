@@ -1,7 +1,7 @@
 
 @extends('layouts.app')
 
-@section('title', 'Kategori - OMPROF Inventory')
+@section('title', 'Kategori - MieTime Logistik')
 @section('page-title', 'Kategori')
 
 @section('content')
@@ -32,6 +32,17 @@
                 @endforeach
             </div>
         @endif
+
+        <form method="GET" action="{{ route('categories.index') }}" class="filter-row" style="margin-bottom:18px">
+            <div class="form-group">
+                <label for="search">Cari kategori</label>
+                <input type="search" id="search" name="search" value="{{ request('search') }}" maxlength="255">
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Cari</button>
+                <a href="{{ route('categories.index') }}" class="btn-secondary">Reset</a>
+            </div>
+        </form>
 
         <div class="table-wrapper">
             <table class="data-table">

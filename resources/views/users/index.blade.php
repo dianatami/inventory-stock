@@ -1,7 +1,7 @@
 
 @extends('layouts.app')
 
-@section('title', 'Manajemen Pengguna - OMPROF')
+@section('title', 'Manajemen Pengguna - MieTime Logistik')
 @section('page-title', 'Manajemen Pengguna')
 
 @section('content')

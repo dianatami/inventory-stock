@@ -1,5 +1,5 @@
 @extends('layouts.outlet')
-@section('title', 'Retur Barang - TPN')
+@section('title', 'Retur Barang - MieTime')
 @section('page-title', 'Retur Barang')
 @section('content')
 @php
@@ -11,7 +11,7 @@
         'verified' => 'Selesai',
     ];
 @endphp
-<div class="outlet-page-head"><div><h1>Retur Barang</h1><p>Ajukan retur atas barang diterima, lalu pantau persetujuan dan verifikasi gudang.</p></div><a href="{{ route('outlet.returns.create') }}" class="btn">+ Ajukan Retur</a></div>
+<div class="outlet-page-head"><div><h1>Retur Barang</h1></div><a href="{{ route('outlet.returns.create') }}" class="btn">+ Ajukan Retur</a></div>
 @forelse ($returns as $return)
 <section class="outlet-panel">
     <div class="outlet-page-head"><div><h2 style="font-size:18px">{{ $return->return_number }}</h2><p>{{ $return->created_at->format('d/m/Y H:i') }} · <span class="outlet-badge">{{ $returnStatusLabels[$return->status] ?? $return->status }}</span></p></div></div>

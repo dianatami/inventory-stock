@@ -3875,7 +3875,7 @@ table.table tbody tr:hover td,
 .company-sidebar-logo {
     padding: 3px;
     border: 1px solid rgb(255 255 255 / 24%);
-    border-radius: 17px;
+    border-radius: 50%;
     background: #fff;
     box-shadow: 0 5px 16px rgb(20 7 5 / 20%);
 }
@@ -3981,6 +3981,378 @@ table.table tbody tr:hover td,
     height: 16px;
 }
 
+.outlet-report-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 22px;
+    padding: 26px 30px;
+    border: 1px solid #f0dfc8;
+    border-radius: 18px;
+    background: linear-gradient(115deg, #fffaf2, #fff 72%);
+    box-shadow: 0 8px 24px rgb(57 31 22 / 5%);
+}
+
+.outlet-report-heading {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.outlet-report-icon,
+.outlet-report-stat-icon,
+.outlet-report-branch-mark,
+.outlet-report-empty-icon {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 14px;
+}
+
+.outlet-report-icon {
+    width: 54px;
+    height: 54px;
+    background: #fff0dc;
+    color: #a52c20;
+}
+
+.outlet-report-icon .interface-icon {
+    width: 25px;
+    height: 25px;
+}
+
+.outlet-report-eyebrow {
+    margin: 0 0 4px;
+    color: #9b6b3f;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .12em;
+}
+
+.outlet-report-hero h1 {
+    margin: 0;
+    color: var(--text-main, #34251f);
+    font-size: clamp(22px, 3vw, 29px);
+    letter-spacing: -.04em;
+}
+
+.outlet-report-hero .outlet-report-heading p:last-child {
+    margin: 5px 0 0;
+    color: var(--text-muted, #75665f);
+    font-size: 13px;
+}
+
+.outlet-report-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.outlet-report-stat {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+    padding: 19px 21px;
+    border: 1px solid var(--border-color, #eee5dc);
+    border-radius: 16px;
+    background: var(--card-bg, #fff);
+    box-shadow: 0 6px 20px rgb(57 31 22 / 4%);
+}
+
+.outlet-report-stat-icon {
+    width: 44px;
+    height: 44px;
+    background: #fff3e1;
+    color: #a52c20;
+}
+
+.outlet-report-stat-icon .interface-icon {
+    width: 21px;
+    height: 21px;
+}
+
+.outlet-report-stat.is-warning .outlet-report-stat-icon {
+    background: #fff4d6;
+    color: #9a6500;
+}
+
+.outlet-report-stat p,
+.outlet-report-stat small {
+    display: block;
+    margin: 0;
+    color: var(--text-muted, #75665f);
+    font-size: 12px;
+}
+
+.outlet-report-stat strong {
+    display: block;
+    margin: 3px 0;
+    color: var(--text-main, #34251f);
+    font-size: 25px;
+    line-height: 1.15;
+}
+
+.outlet-report-content {
+    padding: 24px;
+}
+
+.outlet-report-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.outlet-report-section-heading h2 {
+    margin: 0;
+    font-size: 18px;
+    letter-spacing: -.025em;
+}
+
+.outlet-report-section-heading p {
+    margin: 5px 0 0;
+    color: var(--text-muted, #75665f);
+    font-size: 12px;
+}
+
+.outlet-report-count {
+    padding: 7px 11px;
+    border-radius: 20px;
+    background: #f7f1e9;
+    color: #785b45;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.outlet-report-filters {
+    display: grid;
+    grid-template-columns: minmax(200px, 1.5fr) minmax(180px, 1fr) auto;
+    align-items: end;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding: 16px;
+    border: 1px solid #f0e8df;
+    border-radius: 14px;
+    background: #fdfbf8;
+}
+
+.outlet-report-filters .form-group {
+    margin: 0;
+}
+
+.outlet-report-filters label {
+    display: block;
+    margin-bottom: 7px;
+    color: #62534a;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.outlet-report-filter-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.outlet-report-filter-actions .btn {
+    white-space: nowrap;
+}
+
+.outlet-report-list {
+    display: grid;
+    gap: 12px;
+}
+
+.outlet-report-card {
+    overflow: hidden;
+    border: 1px solid #eee5dc;
+    border-radius: 14px;
+    background: #fff;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.outlet-report-card[open] {
+    border-color: #e6c982;
+    box-shadow: 0 7px 18px rgb(57 31 22 / 5%);
+}
+
+.outlet-report-card-summary {
+    display: grid;
+    grid-template-columns: auto minmax(140px, 1fr) minmax(82px, auto) minmax(90px, auto) auto auto;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 18px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.outlet-report-card-summary::-webkit-details-marker {
+    display: none;
+}
+
+.outlet-report-branch-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #fff0dc, #ffe6d4);
+    color: #a52c20;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.outlet-report-branch-name strong,
+.outlet-report-branch-name small,
+.outlet-report-metric strong,
+.outlet-report-metric small {
+    display: block;
+}
+
+.outlet-report-branch-name strong {
+    color: var(--text-main, #34251f);
+    font-size: 14px;
+}
+
+.outlet-report-branch-name small,
+.outlet-report-metric small {
+    margin-top: 3px;
+    color: var(--text-muted, #75665f);
+    font-size: 11px;
+}
+
+.outlet-report-metric strong {
+    color: var(--text-main, #34251f);
+    font-size: 14px;
+}
+
+.outlet-report-chevron {
+    color: #8f7764;
+    font-size: 18px;
+    transition: transform 160ms ease;
+}
+
+.outlet-report-card[open] .outlet-report-chevron {
+    transform: rotate(180deg);
+}
+
+.outlet-report-table-wrap {
+    padding: 0 18px 16px;
+}
+
+.outlet-report-table-wrap .table {
+    margin-bottom: 0;
+}
+
+.outlet-report-code {
+    padding: 4px 7px;
+    border-radius: 6px;
+    background: #f7f1e9;
+    color: #785b45;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.outlet-report-empty {
+    display: grid;
+    justify-items: center;
+    padding: 44px 20px;
+    border: 1px dashed #e6d9cd;
+    border-radius: 14px;
+    color: var(--text-muted, #75665f);
+    text-align: center;
+}
+
+.outlet-report-empty-icon {
+    width: 46px;
+    height: 46px;
+    margin-bottom: 12px;
+    background: #f7f1e9;
+    color: #98775e;
+}
+
+.outlet-report-empty strong {
+    color: var(--text-main, #34251f);
+}
+
+.outlet-report-empty p {
+    margin: 5px 0 0;
+    font-size: 12px;
+}
+
+.outlet-report-pagination {
+    margin-top: 20px;
+}
+
+@media (max-width: 760px) {
+    .outlet-report-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .outlet-report-filters {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .outlet-report-filter-actions {
+        grid-column: 1 / -1;
+    }
+
+    .outlet-report-card-summary {
+        grid-template-columns: auto 1fr auto;
+    }
+
+    .outlet-report-metric {
+        display: none;
+    }
+}
+
+@media (max-width: 520px) {
+    .outlet-report-hero,
+    .outlet-report-section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .outlet-report-hero {
+        padding: 20px;
+    }
+
+    .outlet-report-content {
+        padding: 16px;
+    }
+
+    .outlet-report-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .outlet-report-filter-actions {
+        grid-column: auto;
+    }
+
+    .outlet-report-card-summary {
+        grid-template-columns: auto 1fr auto;
+        gap: 10px;
+        padding: 13px;
+    }
+
+    .outlet-report-card-summary .report-status {
+        grid-column: 2;
+        grid-row: 2;
+        justify-self: start;
+    }
+
+    .outlet-report-chevron {
+        grid-column: 3;
+        grid-row: 1;
+    }
+
+    .outlet-report-table-wrap {
+        padding: 0 12px 12px;
+    }
+}
+
 .outlet-brand-heading {
     display: flex;
     align-items: center;
@@ -3990,6 +4362,16 @@ table.table tbody tr:hover td,
 
 .outlet-brand-heading strong {
     margin: 0;
+}
+
+.outlet-brand-logo {
+   display: block;
+   width: 48px;
+   height: 48px;
+   flex: 0 0 auto;
+   object-fit: cover;
+   border-radius: 50%;
+   background: #fffaf2;
 }
 
 .outlet-brand-mark {

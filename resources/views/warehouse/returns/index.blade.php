@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Retur Outlet - TPN')
+@section('title', 'Retur Outlet - MieTime Logistik')
 @section('page-title', 'Retur Outlet')
 @section('content')
 @php

@@ -1,8 +1,8 @@
 @extends('layouts.outlet')
-@section('title', 'Dashboard Outlet - TPN')
+@section('title', 'Dashboard Outlet - MieTime')
 @section('page-title', 'Dashboard Outlet')
 @section('content')
-<div class="outlet-page-head"><div><h1>Halo, {{ auth()->user()->name }}</h1><p>Ringkasan persediaan dan aktivitas {{ $outlet->name }}.</p></div></div>
+<div class="outlet-page-head"><div><h1>Ringkasan {{ $outlet->branch_display_name }}</h1></div></div>
 <div class="outlet-grid">
     <div class="outlet-stat"><span>Jenis produk aktif</span><strong>{{ $stocks->count() }}</strong></div>
     <div class="outlet-stat"><span>Total unit stok</span><strong>{{ number_format($stocks->sum('quantity'), 0, ',', '.') }}</strong></div>

@@ -1,14 +1,15 @@
 @extends('layouts.app')
-@section('title', 'Distribusi Barang - TPN')
+@section('title', 'Distribusi Barang - MieTime Logistik')
 @section('page-title', 'Distribusi Barang')
 @section('content')
 <div class="container">
     <div class="page-header">
         <div>
             <h1>Distribusi Barang</h1>
-            <p>Riwayat pengiriman pesanan dari gudang menuju outlet.</p>
         </div>
-        <a href="{{ route('warehouse.orders.index', ['status' => 'approved']) }}" class="btn btn-primary">Pesanan siap dikirim</a>
+        @if (in_array(auth()->user()->role, ['Manager', 'Admin Prolog'], true))
+            <a href="{{ route('warehouse.orders.index', ['status' => 'approved']) }}" class="btn btn-primary">Pesanan siap dikirim</a>
+        @endif
     </div>
 
     <div class="card">
@@ -19,8 +20,7 @@
                         <th>No. distribusi / pesanan</th>
                         <th>Tanggal distribusi</th>
                         <th>Outlet tujuan</th>
-                        <th>Jenis produk</th>
-                        <th>Total kuantitas</th>
+                        <th>Daftar barang dan jumlah</th>
                         <th>Petugas</th>
                         <th>Status</th>
                         <th>Aksi</th>
@@ -40,8 +40,13 @@
                             <td><strong>{{ $distribution->order_number }}</strong></td>
                             <td>{{ $distribution->dispatched_at?->format('d/m/Y H:i') ?? '-' }}</td>
                             <td>{{ $distribution->outlet->name }}</td>
-                            <td>{{ $sentItems->count() }}</td>
-                            <td>{{ number_format($sentItems->sum('dispatched_quantity'), 0, ',', '.') }}</td>
+                            <td>
+                                @forelse ($sentItems as $item)
+                                    <div>{{ $item->product->name }} · {{ number_format($item->dispatched_quantity, 0, ',', '.') }} {{ $item->product->unit }}</div>
+                                @empty
+                                    -
+                                @endforelse
+                            </td>
                             <td>{{ $distribution->dispatcher?->name ?? '-' }}</td>
                             <td><span class="badge">{{ $statusLabels[$distribution->status] ?? $distribution->status }}</span></td>
                             <td>
@@ -78,8 +83,8 @@
                                                 </li>
                                             @endforeach
                                         </ul>
-                                        <button type="button" class="btn btn-secondary" onclick="window.print()">Cetak surat jalan</button>
-                                        @if ($distribution->status === 'receipt_submitted')
+                                        <a class="btn btn-secondary" href="{{ route('distributions.waybill', $distribution) }}">Cetak Surat Jalan</a>
+                                        @if ($distribution->status === 'receipt_submitted' && in_array(auth()->user()->role, ['Manager', 'Admin Prolog'], true))
                                             <a class="btn btn-primary" href="{{ route('warehouse.receipts.index') }}">Validasi penerimaan</a>
                                         @endif
                                     </div>
@@ -87,7 +92,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="empty-state">Belum ada distribusi yang dikirim.</td></tr>
+                        <tr><td colspan="7" class="empty-state">Belum ada distribusi yang dikirim.</td></tr>
                     @endforelse
                 </tbody>
             </table>

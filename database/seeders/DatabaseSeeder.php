@@ -11,11 +11,11 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        User::updateOrCreate(
-            ['username' => 'omprof0001'],
+        User::firstOrCreate(
+            ['username' => 'mietime01'],
             [
-                'name' => 'Manager OMPROF',
-                'email' => 'manager@omprof.test',
+                'name' => 'Manager Mie Time',
+                'email' => 'manager@mietime.test',
                 'password' => Hash::make('Manager123!'),
                 'role' => 'Manager',
                 'is_active' => true,

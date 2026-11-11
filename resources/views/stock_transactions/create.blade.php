@@ -1,7 +1,7 @@
 
 @extends('layouts.app')
 
-@section('title', 'Input ' . ($type === 'in' ? 'Stok Masuk' : 'Stok Keluar') . ' - OMPROF')
+@section('title', 'Input ' . ($type === 'in' ? 'Stok Masuk' : 'Stok Keluar') . ' - MieTime Logistik')
 
 @section('page-title', $type === 'in' ? 'Input Stok Masuk' : 'Input Stok Keluar')
 
@@ -84,7 +84,7 @@
 
             {{-- JUMLAH --}}
             <div class="form-group">
-                <label for="quantity">Jumlah {{ $type === 'in' ? 'Masuk' : 'Keluar' }} <span>*</span></label>
+                <label for="quantity">{{ $type === 'in' ? 'Barang Diterima' : 'Barang Dikirim' }} <span>*</span></label>
 
                 <input
                     type="number"
@@ -103,7 +103,7 @@
 
                 @if ($type === 'out')
                     <small>
-                        Jumlah stok keluar tidak boleh melebihi stok yang tersedia.
+                        Barang yang dikirim tidak boleh melebihi stok yang tersedia.
                     </small>
                 @endif
             </div>

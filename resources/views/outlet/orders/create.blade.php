@@ -1,8 +1,8 @@
 @extends('layouts.outlet')
-@section('title', 'Pesan Barang - TPN')
+@section('title', 'Pemesanan Barang - MieTime')
 @section('page-title', 'Pesan Barang')
 @section('content')
-<div class="outlet-page-head"><div><h1>Ajukan Pesanan</h1><p>Masukkan jumlah untuk produk yang ingin diminta. Biarkan 0 untuk produk yang tidak dipesan.</p></div><a href="{{ route('outlet.orders.index') }}" class="btn" style="background:#6b625d">Kembali</a></div>
+<div class="outlet-page-head"><div><h1>Ajukan Pesanan</h1></div><a href="{{ route('outlet.orders.index') }}" class="btn" style="background:#6b625d">Kembali</a></div>
 <section class="outlet-panel">
     <form class="outlet-form" method="POST" action="{{ route('outlet.orders.store') }}">@csrf
         <div class="outlet-table-wrap"><table class="outlet-table"><thead><tr><th>Produk</th><th>Kode</th><th>Stok gudang</th><th>Satuan</th><th>Jumlah diminta</th></tr></thead><tbody>

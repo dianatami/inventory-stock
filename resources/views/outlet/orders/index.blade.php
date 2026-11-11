@@ -1,5 +1,5 @@
 @extends('layouts.outlet')
-@section('title', 'Pemesanan Barang - TPN')
+@section('title', 'Pemesanan Barang - MieTime')
 @section('page-title', 'Pemesanan Barang')
 @section('content')
 @php
@@ -12,7 +12,7 @@
         'completed' => 'Selesai',
     ];
 @endphp
-<div class="outlet-page-head"><div><h1>Pesanan Barang</h1><p>Pantau persetujuan, pengiriman, dan konfirmasi penerimaan.</p></div><a href="{{ route('outlet.orders.create') }}" class="btn">+ Buat Pesanan</a></div>
+<div class="outlet-page-head"><div><h1>Pesanan Barang</h1></div><a href="{{ route('outlet.orders.create') }}" class="btn">+ Buat Pesanan</a></div>
 @forelse ($orders as $order)
 <section class="outlet-panel">
     <div class="outlet-page-head"><div><h2 style="font-size:18px">{{ $order->order_number }}</h2><p>{{ $order->created_at->format('d/m/Y H:i') }} · <span class="outlet-badge">{{ $orderStatusLabels[$order->status] ?? $order->status }}</span></p></div></div>
@@ -33,14 +33,6 @@
         <p class="outlet-muted" style="margin-top:12px">Konfirmasi penerimaan: <span class="outlet-badge">{{ ucfirst($order->receipt->status) }}</span>
         @if ($order->receipt->validated_at) · divalidasi {{ $order->receipt->validated_at->format('d/m/Y H:i') }}@endif</p>
     @endif
-    <details style="margin-top:14px">
-        <summary>Riwayat status</summary>
-        <ul>
-            @foreach ($order->statusHistory->sortBy('changed_at') as $history)
-                <li>{{ $history->changed_at->format('d/m/Y H:i') }} · {{ $history->from_status ? str_replace('_', ' ', ucfirst($history->from_status)).' → ' : '' }}{{ str_replace('_', ' ', ucfirst($history->to_status)) }} · {{ $history->user?->name ?? 'Sistem' }}</li>
-            @endforeach
-        </ul>
-    </details>
 </section>
 @empty<section class="outlet-panel outlet-empty">Belum ada pesanan. Gunakan tombol “Buat Pesanan” untuk memulai.</section>@endforelse
 <div>{{ $orders->links() }}</div>

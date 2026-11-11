@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Data Outlet - TPN')
+@section('title', 'Data Outlet - MieTime Logistik')
 @section('page-title', 'Data Outlet')
 @section('content')
 <div class="container">

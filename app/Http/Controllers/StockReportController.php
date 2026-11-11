@@ -59,7 +59,7 @@ class StockReportController extends Controller
     {
         $tab = $request->get('tab', 'products');
 
-        if (! in_array($tab, ['products', 'in', 'out', 'adjustment'], true)) {
+        if (! in_array($tab, ['products', 'in', 'out'], true)) {
             $tab = 'products';
         }
 
@@ -118,14 +118,6 @@ class StockReportController extends Controller
             ->whereDate('transaction_date', $date)
             ->count();
 
-        $dailyAdjustment = StockTransaction::where('type', 'adjustment')
-            ->whereDate('transaction_date', $date)
-            ->sum('quantity');
-
-        $dailyAdjustmentCount = StockTransaction::where('type', 'adjustment')
-            ->whereDate('transaction_date', $date)
-            ->count();
-
         return view('reports.stock', compact(
             'tab',
             'date',
@@ -135,9 +127,7 @@ class StockReportController extends Controller
             'dailyIn',
             'dailyOut',
             'dailyInCount',
-            'dailyOutCount',
-            'dailyAdjustment',
-            'dailyAdjustmentCount'
+            'dailyOutCount'
         ));
     }
 }

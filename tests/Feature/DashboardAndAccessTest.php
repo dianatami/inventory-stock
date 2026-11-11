@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Category;
 use App\Models\Outlet;
 use App\Models\Product;
+use App\Models\StockTransaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -38,13 +39,79 @@ class DashboardAndAccessTest extends TestCase
             ->assertOk()
             ->assertSee('Total Produk')
             ->assertSee('Total Stok')
-            ->assertSee('Notifikasi Stok Menipis')
+            ->assertSee('Notifikasi Stok Gudang Menipis')
             ->assertSee('Perhatian: stok menipis')
             ->assertSee('Tepung')
             ->assertSee('1');
     }
 
-    public function test_admin_prolog_can_access_stock_transactions_but_not_product_management(): void
+    public function test_logistics_head_dashboard_shows_warehouse_low_stock_alarm(): void
+    {
+        $head = User::factory()->create([
+            'username' => 'logistics-head-alarm',
+            'role' => 'Kepala Logistik',
+            'is_active' => true,
+        ]);
+        $category = Category::create(['name' => 'Bahan alarm']);
+        Product::create([
+            'code' => 'ALARM-001',
+            'name' => 'Tepung Alarm',
+            'category_id' => $category->id,
+            'unit' => 'kg',
+            'stock' => 2,
+            'minimum_stock' => 5,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($head)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Stok Gudang Menipis')
+            ->assertSee('Alarm Stok Gudang')
+            ->assertSee('Tepung Alarm')
+            ->assertSee('2 kg')
+            ->assertSee('5 kg');
+    }
+
+    public function test_logistics_head_dashboard_shows_incoming_and_outgoing_transactions_today(): void
+    {
+        $head = User::factory()->create([
+            'username' => 'logistics-head-today',
+            'role' => 'Kepala Logistik',
+            'is_active' => true,
+        ]);
+        $category = Category::create(['name' => 'Kategori transaksi hari ini']);
+        $product = Product::create([
+            'code' => 'TODAY-001',
+            'name' => 'Produk transaksi',
+            'category_id' => $category->id,
+            'unit' => 'dus',
+            'stock' => 10,
+            'minimum_stock' => 1,
+            'is_active' => true,
+        ]);
+
+        foreach (['in', 'out'] as $type) {
+            StockTransaction::create([
+                'product_id' => $product->id,
+                'user_id' => $head->id,
+                'type' => $type,
+                'quantity' => 2,
+                'stock_before' => 10,
+                'stock_after' => 10,
+                'transaction_date' => now(),
+                'notes' => 'Uji transaksi hari ini',
+            ]);
+        }
+
+        $this->actingAs($head)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Barang Masuk Hari Ini')
+            ->assertSee('Barang Keluar Hari Ini');
+    }
+
+    public function test_admin_prolog_can_access_stock_transactions_and_master_data(): void
     {
         $user = User::factory()->create([
             'username' => 'adminprolog',
@@ -58,7 +125,8 @@ class DashboardAndAccessTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('products.index'))
-            ->assertForbidden();
+            ->assertOk();
+        $this->get(route('suppliers.index'))->assertOk();
     }
 
     public function test_stock_transaction_pages_require_authentication(): void
@@ -67,16 +135,16 @@ class DashboardAndAccessTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
-    public function test_company_logo_appears_for_warehouse_roles_and_login_but_not_outlet_portal(): void
+    public function test_mietime_logo_appears_for_login_and_all_portal_roles(): void
     {
-        $logo = asset('images/logo-perusahaan.jpeg');
+        $logo = asset('images/mietime-logo.png');
 
         $this->get(route('login'))
             ->assertOk()
             ->assertSee($logo)
             ->assertSee('login-company-logo', false);
 
-        $this->assertFileExists(public_path('images/logo-perusahaan.jpeg'));
+        $this->assertFileExists(public_path('images/mietime-logo.png'));
 
         foreach (['Manager', 'Admin Prolog', 'Kepala Logistik'] as $role) {
             $user = User::factory()->create([
@@ -103,7 +171,8 @@ class DashboardAndAccessTest extends TestCase
             } else {
                 $this->get(route('dashboard'))
                     ->assertSee('Retur Menunggu')
-                    ->assertSee('Pengajuan Retur yang Perlu Dipantau')
+                    ->assertSee('Alarm Stok Gudang')
+                    ->assertDontSee('Pengajuan Retur yang Perlu Dipantau')
                     ->assertDontSee('Grafik Transaksi Bulanan');
             }
         }
@@ -123,8 +192,8 @@ class DashboardAndAccessTest extends TestCase
         $this->actingAs($outletUser)
             ->get(route('outlet.dashboard'))
             ->assertOk()
-            ->assertDontSee($logo)
-            ->assertDontSee('company-sidebar-logo', false)
+            ->assertSee($logo)
+            ->assertSee('outlet-brand-logo', false)
             ->assertDontSee('login-company-logo', false);
     }
 
@@ -166,7 +235,7 @@ class DashboardAndAccessTest extends TestCase
     public function test_manager_can_log_in_with_username_and_password(): void
     {
         User::factory()->create([
-            'username' => 'omprof0001',
+            'username' => 'mietime01',
             'role' => 'Manager',
             'is_active' => true,
             'password' => Hash::make('Manager123!'),
@@ -178,7 +247,7 @@ class DashboardAndAccessTest extends TestCase
             ->assertSee('data-password-toggle', false);
 
         $this->post(route('login.process'), [
-            'username' => 'omprof0001',
+            'username' => 'mietime01',
             'password' => 'Manager123!',
         ])
             ->assertRedirect('/dashboard')

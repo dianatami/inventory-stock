@@ -1,8 +1,8 @@
 @extends('layouts.outlet')
-@section('title', 'Stok Akhir Outlet - TPN')
+@section('title', 'Stok Akhir Outlet - MieTime')
 @section('page-title', 'Stok Akhir Outlet')
 @section('content')
-<div class="outlet-page-head"><div><h1>Stok Opname Harian</h1><p>Masukkan stok fisik akhir. Barang terpakai dihitung dari stok awal + barang diterima − stok akhir fisik.</p></div></div>
+<div class="outlet-page-head"><div><h1>Stok Opname Harian</h1></div></div>
 <section class="outlet-panel">
     <form class="outlet-form" method="POST" action="{{ route('outlet.stocktake.store') }}">@csrf
         <div class="outlet-field" style="max-width:280px"><label for="stocktake_date">Tanggal opname *</label><input type="date" name="stocktake_date" id="stocktake_date" value="{{ old('stocktake_date', $date) }}" max="{{ today()->toDateString() }}" required></div>

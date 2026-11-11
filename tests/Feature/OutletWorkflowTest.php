@@ -8,6 +8,7 @@ use App\Models\OutletOrder;
 use App\Models\OutletReceipt;
 use App\Models\OutletReturn;
 use App\Models\Product;
+use App\Models\SystemNotification;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,6 +20,16 @@ class OutletWorkflowTest extends TestCase
     public function test_order_receipt_stocktake_and_return_update_stocks_once(): void
     {
         [$manager, $outletUser, $outlet, $product] = $this->makeInventory();
+        $admin = User::factory()->create([
+            'username' => 'workflow-admin',
+            'role' => 'Admin Prolog',
+            'is_active' => true,
+        ]);
+        $logisticsHead = User::factory()->create([
+            'username' => 'workflow-logistics-head',
+            'role' => 'Kepala Logistik',
+            'is_active' => true,
+        ]);
 
         $this->actingAs($outletUser)
             ->get(route('outlet.dashboard'))
@@ -40,8 +51,23 @@ class OutletWorkflowTest extends TestCase
             'category' => 'purchase_order',
             'reference_number' => $order->order_number,
         ]);
+        $this->assertSame(
+            ['Admin Prolog'],
+            SystemNotification::where('event_key', 'order-request:'.$order->id)->firstOrFail()->audience
+        );
 
         $this->actingAs($manager)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('data-order-notification', false);
+        $this->getJson(route('notifications.feed'))
+            ->assertOk()
+            ->assertJsonPath('unread_count', 0);
+        $this->get(route('warehouse.orders.index'))
+            ->assertOk()
+            ->assertSee($order->order_number)
+            ->assertDontSee('Setujui Pesanan');
+        $this->actingAs($admin)
             ->get(route('dashboard'))
             ->assertOk()
             ->assertSee('data-order-notification', false)
@@ -49,12 +75,35 @@ class OutletWorkflowTest extends TestCase
 
         $this->actingAs($manager)
             ->patch(route('warehouse.orders.review', $order), [
+            'decision' => 'approve',
+            'approved' => [$orderItem->id => 5],
+            ])->assertForbidden();
+
+        $this->actingAs($admin)
+            ->patch(route('warehouse.orders.review', $order), [
                 'decision' => 'approve',
                 'approved' => [$orderItem->id => 5],
             ])
             ->assertSessionHasNoErrors();
+        $this->assertSame(
+            ['Kepala Logistik'],
+            SystemNotification::where('event_key', 'order-review:'.$order->id)->firstOrFail()->audience
+        );
+        $this->actingAs($admin)
+            ->post(route('warehouse.orders.dispatch', $order), ['driver_name' => 'Budi Santoso'])
+            ->assertForbidden();
 
-        $this->post(route('warehouse.orders.dispatch', $order))
+        $this->actingAs($manager)
+            ->post(route('warehouse.orders.dispatch', $order), ['driver_name' => 'Budi Santoso'])
+            ->assertForbidden();
+        $this->actingAs($logisticsHead)
+            ->getJson(route('notifications.feed'))
+            ->assertOk()
+            ->assertJsonFragment(['category' => 'purchase_order', 'reference_number' => $order->order_number]);
+        $this->get(route('warehouse.orders.index'))
+            ->assertOk()
+            ->assertSee('Kirim Barang');
+        $this->post(route('warehouse.orders.dispatch', $order), ['driver_name' => 'Budi Santoso'])
             ->assertSessionHasNoErrors();
         $this->assertDatabaseHas('system_notifications', [
             'event_key' => 'order-dispatch:'.$order->id,
@@ -73,15 +122,29 @@ class OutletWorkflowTest extends TestCase
             'subject_id' => $order->id,
             'from_status' => 'approved',
             'to_status' => 'dispatched',
-            'user_id' => $manager->id,
+            'user_id' => $logisticsHead->id,
             'quantity' => 5,
         ]);
         $this->assertDatabaseCount('stock_mutations', 1);
         $this->get(route('distributions.index'))
             ->assertOk()
             ->assertSee($order->order_number)
+            ->assertSee('Distribusi Barang')
             ->assertSee('Dalam pengiriman')
             ->assertSee('Lihat detail');
+        $this->get(route('warehouse.orders.index'))
+            ->assertOk()
+            ->assertSee('Cetak Surat Jalan');
+        $this->get(route('stock-mutations.index'))
+            ->assertOk()
+            ->assertSee('Riwayat Distribusi')
+            ->assertSee($order->order_number);
+        $this->get(route('distributions.waybill', $order))
+            ->assertOk()
+            ->assertSee('SURAT JALAN')
+            ->assertSee('Budi Santoso')
+            ->assertSee($outlet->name)
+            ->assertSee('size:A4');
         $this->assertDatabaseCount('outlet_stocks', 0);
 
         $this->post(route('warehouse.orders.dispatch', $order))
@@ -100,6 +163,10 @@ class OutletWorkflowTest extends TestCase
             'event_key' => 'receipt-submitted:'.$order->id,
             'category' => 'distribution',
         ]);
+        $this->assertSame(
+            ['Admin Prolog', 'Kepala Logistik'],
+            SystemNotification::where('event_key', 'receipt-submitted:'.$order->id)->firstOrFail()->audience
+        );
 
         $receipt = OutletReceipt::with('items')->firstOrFail();
         $receiptItem = $receipt->items->firstOrFail();
@@ -110,7 +177,28 @@ class OutletWorkflowTest extends TestCase
             ->post(route('warehouse.receipts.validate', $receipt), [
                 'validated' => [$receiptItem->id => 3],
             ])
+            ->assertForbidden();
+        $this->actingAs($admin)
+            ->get(route('warehouse.receipts.index'))
+            ->assertOk()
+            ->assertSee('Konfirmasi Distribusi');
+        $this->actingAs($logisticsHead)
+            ->get(route('warehouse.receipts.index'))
+            ->assertOk()
+            ->assertSee('Konfirmasi Distribusi');
+        $this->post(route('warehouse.receipts.validate', $receipt), [
+            'validated' => [$receiptItem->id => 3],
+        ])
             ->assertSessionHasNoErrors();
+        $this->assertSame(
+            ['Admin Prolog', 'Kepala Logistik'],
+            SystemNotification::where('event_key', 'receipt-validated:'.$receipt->id)->firstOrFail()->audience
+        );
+        $this->actingAs($admin)
+            ->post(route('warehouse.receipts.validate', $receipt), [
+                'validated' => [$receiptItem->id => 3],
+            ])
+            ->assertSessionHasErrors('receipt');
         $this->assertDatabaseHas('system_notifications', [
             'event_key' => 'receipt-validated:'.$receipt->id,
             'category' => 'distribution',
@@ -226,6 +314,11 @@ class OutletWorkflowTest extends TestCase
     public function test_rejected_orders_and_overstock_requests_do_not_change_warehouse_stock(): void
     {
         [$manager, $outletUser, , $product] = $this->makeInventory();
+        $admin = User::factory()->create([
+            'username' => 'workflow-admin-reject',
+            'role' => 'Admin Prolog',
+            'is_active' => true,
+        ]);
 
         $this->actingAs($outletUser)
             ->post(route('outlet.orders.store'), [
@@ -239,7 +332,7 @@ class OutletWorkflowTest extends TestCase
         ])->assertRedirect(route('outlet.orders.index'));
         $order = OutletOrder::firstOrFail();
 
-        $this->actingAs($manager)
+        $this->actingAs($admin)
             ->patch(route('warehouse.orders.review', $order), [
                 'decision' => 'reject',
                 'decision_notes' => 'Stok dialokasikan untuk kebutuhan lain.',

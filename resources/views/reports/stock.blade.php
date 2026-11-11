@@ -1,7 +1,7 @@
 
 @extends('layouts.app')
 
-@section('title', 'Laporan Stok - OMPROF')
+@section('title', 'Laporan Stok - MieTime Logistik')
 @section('page-title', 'Laporan Stok')
 
 @section('content')
@@ -32,10 +32,6 @@
             <svg class="interface-icon" aria-hidden="true"><use href="#icon-arrow-up"/></svg> Stok Keluar
         </a>
 
-        <a href="{{ route('reports.stock', ['tab' => 'adjustment', 'date' => $date]) }}"
-           class="report-tab {{ $tab === 'adjustment' ? 'active' : '' }}">
-            <svg class="interface-icon" aria-hidden="true"><use href="#icon-adjustments"/></svg> Penyesuaian
-        </a>
     </div>
 
     {{-- RINGKASAN LAPORAN HARIAN --}}
@@ -45,19 +41,19 @@
             <div class="stat-card">
                 <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-layers"/></svg></div>
                 <div>
-                    <p>Total Transaksi {{ $tab === 'in' ? 'Masuk' : ($tab === 'out' ? 'Keluar' : 'Penyesuaian') }}</p>
+                    <p>Total Transaksi {{ $tab === 'in' ? 'Masuk' : 'Keluar' }}</p>
                     <h2>
-                        {{ number_format($tab === 'in' ? $dailyInCount : ($tab === 'out' ? $dailyOutCount : $dailyAdjustmentCount), 0, ',', '.') }}
+                        {{ number_format($tab === 'in' ? $dailyInCount : $dailyOutCount, 0, ',', '.') }}
                     </h2>
                 </div>
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="{{ $tab === 'in' ? '#icon-arrow-down' : ($tab === 'out' ? '#icon-arrow-up' : '#icon-adjustments') }}"/></svg></div>
+                <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="{{ $tab === 'in' ? '#icon-arrow-down' : '#icon-arrow-up' }}"/></svg></div>
                 <div>
-                    <p>Total Kuantitas {{ $tab === 'in' ? 'Masuk' : ($tab === 'out' ? 'Keluar' : 'Disesuaikan') }}</p>
+                    <p>Total Kuantitas {{ $tab === 'in' ? 'Masuk' : 'Keluar' }}</p>
                     <h2>
-                        {{ number_format($tab === 'in' ? $dailyIn : ($tab === 'out' ? $dailyOut : $dailyAdjustment), 0, ',', '.') }}
+                        {{ number_format($tab === 'in' ? $dailyIn : $dailyOut, 0, ',', '.') }}
                     </h2>
                 </div>
             </div>
@@ -65,7 +61,7 @@
             <div class="stat-card">
                 <div class="stat-icon"><svg class="interface-icon" aria-hidden="true"><use href="#icon-arrows-left-right"/></svg></div>
                 <div>
-                    <p>{{ $tab === 'adjustment' ? 'Stok Masuk − Keluar' : 'Net Flow Hari Ini' }}</p>
+                    <p>Net Flow Hari Ini</p>
                     <h2>{{ number_format($dailyIn - $dailyOut, 0, ',', '.') }}</h2>
                 </div>
             </div>
@@ -220,7 +216,7 @@
             <div class="page-header">
                 <div>
                     <h2>
-                        Laporan Stok {{ $tab === 'in' ? 'Masuk' : ($tab === 'out' ? 'Keluar' : 'Penyesuaian') }}
+                        Laporan Stok {{ $tab === 'in' ? 'Masuk' : 'Keluar' }}
                     </h2>
                     <p>
                         Tanggal:
@@ -271,8 +267,8 @@
                                 </td>
 
                                 <td>
-                                    <span class="{{ $tab === 'in' || ($tab === 'adjustment' && $transaction->stock_after > $transaction->stock_before) ? 'quantity-in' : 'quantity-out' }}">
-                                        {{ $tab === 'adjustment' ? ($transaction->stock_after > $transaction->stock_before ? '+' : '−') : ($tab === 'in' ? '+' : '−') }}{{ number_format($transaction->quantity, 0, ',', '.') }}
+                                    <span class="{{ $tab === 'in' ? 'quantity-in' : 'quantity-out' }}">
+                                        {{ $tab === 'in' ? '+' : '−' }}{{ number_format($transaction->quantity, 0, ',', '.') }}
                                         {{ $transaction->product->unit ?? '' }}
                                     </span>
                                 </td>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Inventori TPN</title>
+    <title>Login - MieTime Logistik</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         .login-body{min-height:100vh;padding:28px;background:#fffaf2;display:grid;place-items:center}
@@ -11,7 +11,7 @@
         .login-brand{position:relative;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;padding:48px;background:#35120f;color:#fff}
         .login-brand::after{position:absolute;right:-90px;bottom:-130px;width:390px;height:390px;border:1px solid rgb(244 197 66 / 30%);border-radius:50%;content:""}
         .login-brand-head{display:flex;align-items:center;gap:13px}
-        .login-company-logo{display:block;width:132px;height:132px;flex:0 0 auto;object-fit:contain}
+        .login-company-logo{display:block;width:88px;height:88px;flex:0 0 88px;object-fit:cover;border-radius:50%}
         .login-brand-head strong{display:block;font-size:15px;letter-spacing:.08em}
         .login-brand-head span{display:block;margin-top:4px;color:#e7c9be;font-size:12px}
         .login-brand-copy{position:relative;z-index:1;max-width:430px}
@@ -46,9 +46,9 @@
         <section class="login-brand" aria-label="Informasi perusahaan">
             <div class="login-brand-head">
                 <img class="login-company-logo"
-                     src="{{ asset('images/logo-perusahaan.jpeg') }}"
-                     alt="Logo PT Tiga Pemuda Nusantara">
-                <div><strong>PT TIGA PEMUDA NUSANTARA</strong><span>Sistem inventori dan distribusi barang</span></div>
+                     src="{{ asset('images/mietime-logo.png') }}"
+                     alt="Logo MieTime">
+                <div><strong>MIETIME LOGISTIK</strong><span>Sistem inventori dan distribusi barang</span></div>
             </div>
             <div class="login-brand-copy">
                 <small>INVENTORI TERINTEGRASI</small>
@@ -60,9 +60,9 @@
 
         <section class="login-form-side">
             <div class="login-card">
-                <p class="login-company">PT Tiga Pemuda Nusantara</p>
+                <p class="login-company">MieTime Logistik</p>
                 <h2>Masuk ke sistem</h2>
-                <p class="login-subtitle">Gunakan akun terdaftar untuk melanjutkan ke dashboard inventori.</p>
+                <p class="login-subtitle">Pastikan akun yang dimasukkan sudah terdaftar.</p>
 
                 @if ($errors->any())
                     <div class="login-error" role="alert">{{ $errors->first() }}</div>
@@ -88,7 +88,7 @@
                     </div>
                     <button type="submit" class="login-submit">Login</button>
                 </form>
-                <p class="login-footer">&copy; {{ date('Y') }} PT Tiga Pemuda Nusantara</p>
+                <p class="login-footer">&copy; {{ date('Y') }} MieTime Logistik</p>
             </div>
         </section>
     </main>

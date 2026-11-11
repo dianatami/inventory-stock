@@ -63,6 +63,16 @@ class OrderManagementController extends Controller
         return view('warehouse.distributions.index', compact('distributions'));
     }
 
+    public function waybill(OutletOrder $order)
+    {
+        $order = OutletOrder::with(['outlet', 'dispatcher', 'items.product'])
+            ->whereKey($order->id)
+            ->whereIn('status', ['dispatched', 'receipt_submitted', 'completed'])
+            ->firstOrFail();
+
+        return view('warehouse.distributions.waybill', compact('order'));
+    }
+
     public function review(
         Request $request,
         OutletOrder $order,
@@ -162,7 +172,7 @@ class OrderManagementController extends Controller
             'Pesanan '.$order->order_number.($approved ? ' disetujui' : ' ditolak'),
             'Pesanan dari '.$order->outlet->name.' '
                 .($approved ? 'telah disetujui dan menunggu pengiriman.' : 'ditolak: '.($validated['decision_notes'] ?? 'tanpa catatan alasan.')),
-            ['Manager', 'Admin Prolog'],
+            ['Kepala Logistik'],
             'order',
             $order->id,
             $order->order_number
@@ -177,7 +187,11 @@ class OrderManagementController extends Controller
         LowStockNotificationService $notifications,
         SystemNotificationService $systemNotifications
     ) {
-        DB::transaction(function () use ($request, $order) {
+        $validated = $request->validate([
+            'driver_name' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        DB::transaction(function () use ($request, $order, $validated) {
             $order = OutletOrder::with(['outlet', 'items.product'])
                 ->whereKey($order->id)
                 ->lockForUpdate()
@@ -245,6 +259,7 @@ class OrderManagementController extends Controller
                 'status' => 'dispatched',
                 'dispatched_at' => now(),
                 'dispatched_by' => $request->user()->id,
+                'driver_name' => $validated['driver_name'] ?? null,
             ]);
             WorkflowStatusHistory::record(
                 $order,
@@ -263,7 +278,7 @@ class OrderManagementController extends Controller
             'distribution',
             'Distribusi ke '.$order->outlet->name.' telah dikirim',
             'Pesanan '.$order->order_number.' telah dikirim; stok gudang sudah dimutasi sesuai jumlah yang disetujui.',
-            ['Manager', 'Admin Prolog'],
+            ['Admin Prolog'],
             'order',
             $order->id,
             $order->order_number
@@ -405,7 +420,7 @@ class OrderManagementController extends Controller
             'distribution',
             'Penerimaan '.$receipt->order->order_number.' telah divalidasi',
             'Penerimaan barang dari '.$receipt->outlet->name.' sudah diperiksa dan stok outlet diperbarui sesuai jumlah layak.',
-            ['Manager', 'Admin Prolog'],
+            ['Admin Prolog', 'Kepala Logistik'],
             'order',
             $receipt->order_id,
             $receipt->order->order_number

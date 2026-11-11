@@ -9,7 +9,7 @@ class StockMutationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = StockMutation::with(['product', 'user']);
+        $query = StockMutation::with(['product', 'user', 'outletOrderItem.order']);
 
         if ($request->filled('search')) {
             $search = $request->string('search')->toString();

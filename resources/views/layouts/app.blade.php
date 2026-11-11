@@ -5,11 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'OMPROF Inventory')</title>
+    <title>@yield('title', 'MieTime Logistik')</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
-        .company-sidebar-logo{display:block;width:60px;height:60px;flex:0 0 auto;object-fit:contain}
+        .company-sidebar-logo{display:block;width:52px;height:52px;flex:0 0 52px;object-fit:cover;border-radius:50%}
         .notification-menu{position:relative;z-index:160}.notification-toggle{position:relative;width:42px;height:42px;border:1px solid var(--border);border-radius:50%;background:#fff;color:var(--text-main);font-size:20px}
         .topbar-actions{display:flex;flex:0 0 auto;align-items:center;justify-content:flex-end;gap:24px;margin-left:auto}
         .notification-count{position:absolute;top:-5px;right:-5px;min-width:19px;padding:2px 5px;border-radius:99px;background:#dc2626;color:#fff;font-size:10px;font-weight:700}
@@ -49,12 +49,12 @@
             <div class="sidebar-brand">
                 @if (in_array(auth()->user()->role, ['Manager', 'Admin Prolog', 'Kepala Logistik'], true))
                     <img class="company-sidebar-logo"
-                         src="{{ asset('images/logo-perusahaan.jpeg') }}"
-                         alt="Logo PT Tiga Pemuda Nusantara">
+                         src="{{ asset('images/mietime-logo.png') }}"
+                         alt="Logo MieTime">
                 @endif
                 <div>
-                    <h2>TPN</h2>
-                    <p>Inventory System</p>
+                    <h2>MieTime</h2>
+                    <p>Logistik</p>
                 </div>
             </div>
 
@@ -73,7 +73,7 @@
                     <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-layers"/></svg></span> Kategori
                 </a>
 
-                @if (auth()->user()->role === 'Manager')
+                @if (in_array(auth()->user()->role, ['Manager', 'Admin Prolog', 'Kepala Logistik'], true))
                     <a href="{{ route('suppliers.index') }}"
                        class="nav-link {{ request()->routeIs('suppliers.*') ? 'active' : '' }}">
                         <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-truck"/></svg></span> Supplier
@@ -84,7 +84,7 @@
                     </a>
                 @endif
 
-                @if (in_array(auth()->user()->role, ['Manager', 'Admin Prolog']))
+                @if (in_array(auth()->user()->role, ['Manager', 'Admin Prolog', 'Kepala Logistik'], true))
                     <p class="nav-heading">TRANSAKSI STOK</p>
 
                     <a href="{{ route('stock-in.index') }}"
@@ -97,29 +97,29 @@
                         <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-arrow-up"/></svg></span> Stok Keluar
                     </a>
 
-                    <a href="{{ route('warehouse.orders.index') }}"
-                       class="nav-link {{ request()->routeIs('warehouse.orders.*') ? 'active' : '' }}">
-                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-shopping-cart"/></svg></span> Pesanan Outlet
-                    </a>
+                    @if (in_array(auth()->user()->role, ['Manager', 'Admin Prolog', 'Kepala Logistik'], true))
+                        <a href="{{ route('warehouse.orders.index') }}"
+                           class="nav-link {{ request()->routeIs('warehouse.orders.*') ? 'active' : '' }}">
+                            <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-shopping-cart"/></svg></span> Proses Pesanan Outlet
+                        </a>
+                    @endif
 
                     <a href="{{ route('distributions.index') }}"
                        class="nav-link {{ request()->routeIs('distributions.*') ? 'active' : '' }}">
-                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-truck"/></svg></span> Distribusi Barang
-                    </a>
-                    <a href="{{ route('warehouse.receipts.index') }}"
-                       class="nav-link {{ request()->routeIs('warehouse.receipts.*') ? 'active' : '' }}">
-                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-check-circle"/></svg></span> Validasi Penerimaan
+                            <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-truck"/></svg></span> Distribusi Barang
                     </a>
 
-                    <a href="{{ route('stock-adjustments.index') }}"
-                       class="nav-link {{ request()->routeIs('stock-adjustments.*') ? 'active' : '' }}">
-                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-adjustments"/></svg></span> Penyesuaian Stok
-                    </a>
+                        <a href="{{ route('stock-mutations.index') }}"
+                           class="nav-link {{ request()->routeIs('stock-mutations.*') ? 'active' : '' }}">
+                            <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-arrows-left-right"/></svg></span> Riwayat Distribusi
+                        </a>
+                    @if (in_array(auth()->user()->role, ['Manager', 'Admin Prolog', 'Kepala Logistik'], true))
+                        <a href="{{ route('warehouse.receipts.index') }}"
+                           class="nav-link {{ request()->routeIs('warehouse.receipts.*') ? 'active' : '' }}">
+                            <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-check-circle"/></svg></span> Validasi Penerimaan
+                        </a>
+                    @endif
 
-                    <a href="{{ route('stock-mutations.index') }}"
-                       class="nav-link {{ request()->routeIs('stock-mutations.*') ? 'active' : '' }}">
-                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-arrows-left-right"/></svg></span> Mutasi Stok
-                    </a>
                 @endif
                 @if (in_array(auth()->user()->role, ['Manager', 'Admin Prolog', 'Kepala Logistik']))
                     <a href="{{ route('warehouse.returns.index') }}"
@@ -130,20 +130,45 @@
 
                 <p class="nav-heading">ADMIN & DATA</p>
 
+                @if (in_array(auth()->user()->role, ['Admin Prolog', 'Kepala Logistik'], true))
+                    <a href="{{ route('logistics-requests.index') }}"
+                       class="nav-link {{ request()->routeIs('logistics-requests.*') ? 'active' : '' }}">
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-check-circle"/></svg></span> Permintaan Barang
+                    </a>
+                @endif
+
                 <a href="{{ route('reports.stock') }}"
                    class="nav-link {{ request()->routeIs('reports.stock') ? 'active' : '' }}">
                     <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-chart"/></svg></span> Laporan Stok Keseluruhan
                 </a>
 
-                <a href="{{ route('reports.daily') }}"
-                   class="nav-link {{ request()->routeIs('reports.daily') ? 'active' : '' }}">
-                    <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-calendar"/></svg></span> Laporan Stok Harian
-                </a>
+                @if (in_array(auth()->user()->role, ['Manager', 'Admin Prolog'], true))
+                    <a href="{{ route('reports.daily') }}"
+                       class="nav-link {{ request()->routeIs('reports.daily') ? 'active' : '' }}">
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-calendar"/></svg></span> Laporan Stok Harian
+                    </a>
+                @endif
 
-                <a href="{{ route('statistics.index') }}"
-                   class="nav-link {{ request()->routeIs('statistics.*') ? 'active' : '' }}">
-                    <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-chart"/></svg></span> Statistik Data
-                </a>
+                @if (in_array(auth()->user()->role, ['Manager', 'Kepala Logistik'], true))
+                    <a href="{{ route('reports.outlets') }}"
+                       class="nav-link {{ request()->routeIs('reports.outlets') ? 'active' : '' }}">
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-store"/></svg></span> Laporan Rekap Outlet
+                    </a>
+                @endif
+
+                @if (in_array(auth()->user()->role, ['Manager', 'Admin Prolog'], true))
+                    <a href="{{ route('statistics.index') }}"
+                       class="nav-link {{ request()->routeIs('statistics.*') ? 'active' : '' }}">
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-chart"/></svg></span> Statistik Data
+                    </a>
+                @endif
+
+                @if (auth()->user()->role === 'Manager')
+                    <a href="{{ route('orders.recap.index') }}"
+                       class="nav-link {{ request()->routeIs('orders.recap.*') ? 'active' : '' }}">
+                        <span><svg class="nav-icon" aria-hidden="true"><use href="#icon-shopping-cart"/></svg></span> Rekap Order Outlet
+                    </a>
+                @endif
 
                 <p class="nav-heading">PENGATURAN</p>
                 <a href="{{ route('settings.index') }}"
@@ -235,7 +260,7 @@
             </main>
 
             <footer class="page-footer">
-                &copy; {{ date('Y') }} PT Tiga Pemuda Nusantara
+                &copy; {{ date('Y') }} MieTime Logistik
             </footer>
         </div>
     </div>

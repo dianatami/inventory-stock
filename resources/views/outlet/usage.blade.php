@@ -1,8 +1,8 @@
 @extends('layouts.outlet')
-@section('title', 'Barang Terpakai - TPN')
+@section('title', 'Barang Terpakai - MieTime')
 @section('page-title', 'Barang Terpakai')
 @section('content')
-<div class="outlet-page-head"><div><h1>Laporan Barang Terpakai</h1><p>Rumus: stok awal + barang diterima − stok akhir fisik.</p></div></div>
+<div class="outlet-page-head"><div><h1>Laporan Barang Terpakai</h1></div></div>
 <section class="outlet-panel">
     <form method="GET" action="{{ route('outlet.usage.index') }}" class="outlet-form-grid" style="margin-bottom:18px">
         <div class="outlet-field"><label for="date">Tanggal opname</label><input type="date" name="date" id="date" value="{{ $date }}"></div>

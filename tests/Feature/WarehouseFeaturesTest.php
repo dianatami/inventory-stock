@@ -25,8 +25,13 @@ class WarehouseFeaturesTest extends TestCase
             ->get(route('distributions.index'))
             ->assertOk()
             ->assertSee('Distribusi Barang')
-            ->assertSee('Total kuantitas')
+            ->assertSee('Daftar barang dan jumlah')
             ->assertSee('Belum ada distribusi yang dikirim.');
+
+        $this->get(route('stock-mutations.index'))
+            ->assertOk()
+            ->assertSee('Riwayat Distribusi')
+            ->assertSee('Barang Dikirim ke Outlet');
     }
 
     public function test_supplier_uses_whatsapp_without_a_separate_phone_field(): void
@@ -97,28 +102,34 @@ class WarehouseFeaturesTest extends TestCase
             ->assertDontSee('Beras');
     }
 
-    public function test_stock_adjustment_sets_physical_count_and_records_difference(): void
+    public function test_stock_adjustment_feature_is_removed_without_deleting_historical_adjustment_records(): void
     {
         [$user, $product] = $this->createManagerAndProduct(12);
+        $adjustment = StockTransaction::create([
+            'product_id' => $product->id,
+            'user_id' => $user->id,
+            'type' => 'adjustment',
+            'quantity' => 3,
+            'stock_before' => 12,
+            'stock_after' => 9,
+            'transaction_date' => now(),
+            'notes' => 'Riwayat opname lama',
+        ]);
 
         $this->actingAs($user)
-            ->post(route('stock-adjustments.store'), [
-                'product_id' => $product->id,
-                'actual_stock' => 9,
-                'transaction_date' => now()->format('Y-m-d\TH:i'),
-                'notes' => 'Selisih hasil opname',
-            ])
-            ->assertRedirect(route('stock-adjustments.index'))
-            ->assertSessionHas('success');
+            ->get('/stock-adjustments')
+            ->assertNotFound();
+        $this->get('/stock-adjustments/create')->assertNotFound();
+        $this->post('/stock-adjustments', [])->assertNotFound();
 
-        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 9]);
         $this->assertDatabaseHas('stock_transactions', [
-            'product_id' => $product->id,
+            'id' => $adjustment->id,
             'type' => 'adjustment',
             'quantity' => 3,
             'stock_before' => 12,
             'stock_after' => 9,
         ]);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 12]);
     }
 
     public function test_statistics_and_low_stock_pages_render_for_manager(): void
@@ -284,7 +295,7 @@ class WarehouseFeaturesTest extends TestCase
         $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 10]);
         $this->get(route('products.edit', $product))
             ->assertOk()
-            ->assertSee('Gunakan menu Stok Masuk, Stok Keluar, atau Penyesuaian Stok');
+            ->assertSee('Perubahan saldo dicatat melalui transaksi Stok Masuk atau Stok Keluar.');
     }
 
     public function test_initial_product_stock_is_recorded_as_a_stock_transaction(): void
@@ -347,6 +358,39 @@ class WarehouseFeaturesTest extends TestCase
             ->assertSee('DAILY-IN')
             ->assertSee('Barang Masuk')
             ->assertDontSee('OTHER-DAY');
+    }
+
+    public function test_overall_stock_report_hides_adjustment_tab_without_removing_historical_transactions(): void
+    {
+        [$user, $product] = $this->createManagerAndProduct(10);
+        $adjustment = StockTransaction::create([
+            'product_id' => $product->id,
+            'user_id' => $user->id,
+            'type' => 'adjustment',
+            'quantity' => 2,
+            'stock_before' => 10,
+            'stock_after' => 12,
+            'transaction_date' => today(),
+            'notes' => 'Riwayat penyesuaian lama',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('reports.stock'))
+            ->assertOk()
+            ->assertSee('Stok Produk')
+            ->assertSee('Stok Masuk')
+            ->assertSee('Stok Keluar')
+            ->assertDontSee('Penyesuaian');
+        $this->get(route('reports.stock', ['tab' => 'adjustment']))
+            ->assertOk()
+            ->assertSee('Stok Produk')
+            ->assertDontSee('Penyesuaian');
+
+        $this->assertDatabaseHas('stock_transactions', [
+            'id' => $adjustment->id,
+            'type' => 'adjustment',
+            'notes' => 'Riwayat penyesuaian lama',
+        ]);
     }
 
     public function test_profile_and_password_can_be_updated_with_current_password(): void

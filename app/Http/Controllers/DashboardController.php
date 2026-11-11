@@ -43,6 +43,9 @@ class DashboardController extends Controller
             'pending_receipts' => in_array($role, ['Manager', 'Admin Prolog'], true)
                 ? OutletReceipt::where('status', 'submitted')->count()
                 : 0,
+            'approved_orders' => in_array($role, ['Manager', 'Kepala Logistik'], true)
+                ? OutletOrder::where('status', 'approved')->count()
+                : 0,
             'pending_returns' => in_array($role, ['Manager', 'Kepala Logistik'], true)
                 ? OutletReturn::where('status', 'requested')->count()
                 : 0,
@@ -95,14 +98,14 @@ class DashboardController extends Controller
             ->latest('notified_at')
             ->limit(8)
             ->get();
-        $newOrders = in_array(auth()->user()->role, ['Manager', 'Admin Prolog'], true)
+        $newOrders = $role === 'Admin Prolog'
             ? OutletOrder::with('outlet', 'items.product')
                 ->where('status', 'requested')
                 ->latest()
                 ->limit(5)
                 ->get()
             : collect();
-        $newOrdersCount = in_array(auth()->user()->role, ['Manager', 'Admin Prolog'], true)
+        $newOrdersCount = $role === 'Admin Prolog'
             ? OutletOrder::where('status', 'requested')->count()
             : 0;
         $recentReturns = in_array($role, ['Manager', 'Kepala Logistik'], true)

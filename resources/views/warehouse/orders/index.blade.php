@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Pesanan Outlet - TPN')
+@section('title', 'Pesanan Outlet - MieTime Logistik')
 @section('page-title', 'Pesanan Outlet')
 @section('content')
 <div class="container">
@@ -13,7 +13,7 @@
             'completed' => 'Selesai',
         ];
     @endphp
-    <div class="page-header"><div><h1>Pesanan Outlet</h1><p>Periksa permintaan, tetapkan jumlah disetujui, lalu kirim barang.</p></div></div>
+    <div class="page-header"><div><h1>Pesanan Outlet</h1><p>Admin Prolog menyetujui pesanan, kemudian Kepala Logistik menyiapkan distribusi.</p></div></div>
     @if ($errors->any())<div class="alert alert-danger"><ul>@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
     <div class="card" style="margin-bottom:18px"><form method="GET" action="{{ route('warehouse.orders.index') }}" class="user-filter-grid">
         <div class="form-group"><label>Status</label><select name="status"><option value="">Semua status</option>@foreach ($orderStatusLabels as $status => $label)<option value="{{ $status }}" @selected(request('status') === $status)>{{ $label }}</option>@endforeach</select></div>
@@ -27,7 +27,7 @@
             <div class="table-responsive"><table class="table"><thead><tr><th>Produk</th><th>Stok gudang</th><th>Diminta</th><th>Disetujui</th><th>Dikirim</th></tr></thead><tbody>
                 @foreach ($order->items as $item)<tr><td>{{ $item->product->name }}</td><td>{{ $item->product->stock }} {{ $item->product->unit }}</td><td>{{ $item->requested_quantity }}</td><td>{{ $item->approved_quantity ?? '-' }}</td><td>{{ $item->dispatched_quantity ?? '-' }}</td></tr>@endforeach
             </tbody></table></div>
-            @if ($order->status === 'requested')
+            @if ($order->status === 'requested' && auth()->user()->role === 'Admin Prolog')
                 <form method="POST" action="{{ route('warehouse.orders.review', $order) }}" style="margin-top:16px">@csrf @method('PATCH')
                     <h3>Periksa dan tentukan jumlah</h3>
                     <div class="table-responsive"><table class="table"><thead><tr><th>Produk</th><th>Diminta</th><th>Jumlah disetujui</th></tr></thead><tbody>
@@ -36,10 +36,13 @@
                     <div class="form-group"><label>Catatan keputusan</label><textarea name="decision_notes" rows="2" class="form-control"></textarea></div>
                     <div class="form-actions"><button name="decision" value="approve" class="btn btn-primary">Setujui Pesanan</button><button name="decision" value="reject" class="btn btn-secondary">Tolak Pesanan</button></div>
                 </form>
-            @elseif ($order->status === 'approved')
+            @elseif ($order->status === 'approved' && auth()->user()->role === 'Kepala Logistik')
                 <form method="POST" action="{{ route('warehouse.orders.dispatch', $order) }}" style="margin-top:16px">@csrf
-                    <button class="btn btn-primary" onclick="return confirm('Kirim barang? Stok gudang akan berkurang dan Mutasi Stok Gudang → Outlet akan dicatat.')">Kirim Barang & Catat Mutasi</button>
+                    <div class="form-group"><label for="driver_name_{{ $order->id }}">Nama sopir (opsional)</label><input id="driver_name_{{ $order->id }}" name="driver_name" type="text" maxlength="255" value="{{ old('driver_name') }}"></div>
+                    <button class="btn btn-primary" onclick="return confirm('Kirim barang? Stok gudang akan berkurang dan distribusi akan dicatat.')">Kirim Barang & Catat Mutasi</button>
                 </form>
+            @elseif (in_array($order->status, ['dispatched', 'receipt_submitted', 'completed'], true))
+                <a class="btn btn-primary" href="{{ route('distributions.waybill', $order) }}">Cetak Surat Jalan</a>
             @endif
         </section>
     @empty<div class="card empty-state">Belum ada pesanan outlet.</div>@endforelse

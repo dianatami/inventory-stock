@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Distribusi Barang - TPN')
+@section('title', 'Validasi Penerimaan - MieTime Logistik')
 @section('page-title', 'Distribusi Barang')
 @section('content')
 <div class="container"><div class="page-header"><div><h1>Validasi Penerimaan</h1><p>Periksa jumlah barang yang dilaporkan outlet dan tambahkan hanya jumlah yang disetujui ke stok outlet.</p></div><a href="{{ route('distributions.index') }}" class="btn btn-primary">Lihat Distribusi</a></div>
@@ -9,7 +9,7 @@
         <section class="card" style="margin-bottom:18px">
             <div class="page-header"><div><h2>{{ $receipt->order->order_number }} · {{ $receipt->outlet->name }}</h2><p>Dikonfirmasi {{ $receipt->submitted_at->format('d/m/Y H:i') }} · <span class="badge">{{ ucfirst($receipt->status) }}</span></p></div></div>
             @if ($receipt->notes)<p>{{ $receipt->notes }}</p>@endif
-            @if ($receipt->status === 'submitted')
+            @if ($receipt->status === 'submitted' && in_array(auth()->user()->role, ['Admin Prolog', 'Kepala Logistik'], true))
                 <form method="POST" action="{{ route('warehouse.receipts.validate', $receipt) }}">@csrf
                     <div class="table-responsive"><table class="table"><thead><tr><th>Produk</th><th>Dikirim</th><th>Diterima</th><th>Rusak</th><th>Kurang</th><th>Layak tervalidasi</th></tr></thead><tbody>
                     @foreach ($receipt->items as $item)<tr><td>{{ $item->orderItem->product->name }}</td><td>{{ $item->orderItem->dispatched_quantity }}</td><td>{{ $item->received_quantity }}</td><td>{{ $item->damaged_quantity }}</td><td>{{ $item->short_quantity }}</td><td><input class="form-control" type="number" name="validated[{{ $item->id }}]" min="0" max="{{ $item->received_quantity - $item->damaged_quantity }}" value="{{ $item->received_quantity - $item->damaged_quantity }}" required></td></tr>@endforeach

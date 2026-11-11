@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Portal Outlet - TPN')</title>
+    <title>@yield('title', 'MieTime Outlet')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
@@ -12,10 +12,9 @@
     <aside class="outlet-sidebar">
         <div class="outlet-brand">
             <div class="outlet-brand-heading">
-                <span class="outlet-brand-mark"><svg class="interface-icon" aria-hidden="true"><use href="#icon-package"/></svg></span>
-                <strong>TPN Outlet</strong>
+                <img class="outlet-brand-logo" src="{{ asset('images/mietime-logo.png') }}" alt="Logo MieTime">
+                <strong>{{ auth()->user()->outlet?->branch_display_name ?? 'MieTime Outlet' }}</strong>
             </div>
-            <span>PORTAL PERSEDIAAN</span>
         </div>
         <nav class="outlet-nav">
             <a href="{{ route('outlet.dashboard') }}" class="{{ request()->routeIs('outlet.dashboard') ? 'active' : '' }}"><svg class="nav-icon" aria-hidden="true"><use href="#icon-dashboard"/></svg> Dashboard</a>
@@ -43,7 +42,7 @@
             @endif
             @yield('content')
         </main>
-        <footer class="outlet-footer">&copy; {{ date('Y') }} PT Tiga Pemuda Nusantara</footer>
+        <footer class="outlet-footer">&copy; {{ date('Y') }} Mie Time</footer>
     </div>
 </div>
 </body>

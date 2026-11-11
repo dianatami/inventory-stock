@@ -1,7 +1,7 @@
 
 @extends('layouts.app')
 
-@section('title', 'Edit Kategori - OMPROF Inventory')
+@section('title', 'Edit Kategori - MieTime Logistik')
 @section('page-title', 'Edit Kategori')
 
 @section('content')

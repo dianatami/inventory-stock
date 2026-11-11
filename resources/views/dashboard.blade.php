@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard - Inventori TPN')
+@section('title', 'Dashboard - MieTime Logistik')
 @section('page-title', 'Dashboard')
 
 @section('content')
@@ -26,11 +26,16 @@
                 ['key' => 'dispatched_orders', 'label' => 'Distribusi Berjalan', 'detail' => 'Pesanan sudah dikirim', 'icon' => 'truck'],
                 ['key' => 'pending_receipts', 'label' => 'Penerimaan Menunggu', 'detail' => 'Menunggu validasi gudang', 'icon' => 'check-circle'],
             ],
-            default => [
+            'Kepala Logistik' => [
+                ['key' => 'low_stock', 'label' => 'Stok Gudang Menipis', 'detail' => 'Pada atau di bawah minimum', 'icon' => 'alert', 'warning' => true],
+                ['key' => 'today_in', 'label' => 'Barang Masuk Hari Ini', 'detail' => 'Transaksi masuk', 'icon' => 'arrow-down'],
+                ['key' => 'today_out', 'label' => 'Barang Keluar Hari Ini', 'detail' => 'Transaksi keluar', 'icon' => 'arrow-up'],
+                ['key' => 'approved_orders', 'label' => 'Pesanan Siap Didistribusikan', 'detail' => 'Disetujui Admin Prolog', 'icon' => 'truck'],
                 ['key' => 'pending_returns', 'label' => 'Retur Menunggu', 'detail' => 'Menunggu keputusan logistik', 'icon' => 'rotate', 'warning' => true],
                 ['key' => 'active_returns', 'label' => 'Retur dalam Proses', 'detail' => 'Disetujui atau dikirim outlet', 'icon' => 'truck'],
                 ['key' => 'returns_today', 'label' => 'Retur Diverifikasi Hari Ini', 'detail' => 'Selesai diperiksa gudang', 'icon' => 'check-circle'],
             ],
+            default => [],
         };
     @endphp
 
@@ -61,14 +66,18 @@
     <div class="welcome-panel">
         <div>
             <span class="welcome-eyebrow">RINGKASAN OPERASIONAL</span>
-            <h2>Selamat datang, {{ auth()->user()->name }}!</h2>
+            @if ($role === 'Manager')
+                <h2>Manager Mie Time</h2>
+            @else
+                <h2>Selamat datang, {{ auth()->user()->name }}!</h2>
+            @endif
             <p>
                 @if ($role === 'Kepala Logistik')
-                    Pantau pengajuan retur dan aktivitas logistik yang memerlukan tindak lanjut.
+                    Pantau alarm stok gudang, laporan outlet, dan pengajuan retur yang memerlukan tindak lanjut.
                 @elseif ($role === 'Admin Prolog')
                     Pantau stok gudang, pesanan outlet, dan proses distribusi barang.
                 @else
-                    Ringkasan inventori PT Tiga Pemuda Nusantara untuk memantau persediaan dan aktivitas transaksi.
+                    Ringkasan inventori MieTime untuk memantau persediaan dan aktivitas transaksi.
                 @endif
             </p>
         </div>
@@ -118,7 +127,7 @@
     </section>
     @endif
 
-    @if (in_array($role, ['Manager', 'Admin Prolog']))
+    @if (in_array($role, ['Manager', 'Admin Prolog', 'Kepala Logistik']))
         <section class="section-panel dashboard-alerts">
             <div class="section-heading">
                 <div>
@@ -147,35 +156,7 @@
         </section>
     @endif
 
-    @if ($role === 'Kepala Logistik')
-        <section class="section-panel logistics-returns-panel">
-            <div class="section-heading">
-                <div>
-                    <h3>Pengajuan Retur yang Perlu Dipantau</h3>
-                    <p>Retur menunggu keputusan atau masih dalam proses pengiriman dan verifikasi.</p>
-                </div>
-                <a href="{{ route('warehouse.returns.index') }}" class="section-link">Lihat semua retur</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table">
-                    <thead><tr><th>Nomor retur</th><th>Outlet</th><th>Jumlah item</th><th>Status</th><th>Diajukan</th></tr></thead>
-                    <tbody>
-                        @forelse ($recentReturns as $return)
-                            <tr>
-                                <td><strong>{{ $return->return_number }}</strong></td>
-                                <td>{{ $return->outlet->name }}</td>
-                                <td>{{ $return->items->count() }} produk</td>
-                                <td>{{ str_replace('_', ' ', ucfirst($return->status)) }}</td>
-                                <td>{{ $return->created_at->format('d/m/Y H:i') }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="5" class="empty-state">Tidak ada retur yang memerlukan tindak lanjut.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    @else
+    @if ($role !== 'Kepala Logistik')
     <div class="dashboard-detail-grid">
         <section class="section-panel">
             <div class="section-heading">
@@ -183,7 +164,6 @@
                     <h3>Riwayat Barang Masuk</h3>
                     <p>Transaksi masuk terbaru.</p>
                 </div>
-                @endif
                 @if (in_array(auth()->user()->role, ['Manager', 'Admin Prolog']))
                     <a href="{{ route('stock-in.index') }}" class="section-link">Lihat semua</a>
                 @endif
@@ -218,7 +198,7 @@
         <section class="section-panel">
             <div class="section-heading">
                 <div>
-                    <h3>Notifikasi Stok Menipis</h3>
+                    <h3>Notifikasi Stok Gudang Menipis</h3>
                     <p><strong>{{ $metrics['low_stock'] }} produk</strong> berada pada atau di bawah batas minimum.</p>
                 </div>
                 <a href="{{ route('notifications.low-stock') }}" class="section-link">Tindak lanjuti</a>
@@ -258,5 +238,6 @@
                 }
             });
         </script>
+    @endif
     @endif
 @endsection
