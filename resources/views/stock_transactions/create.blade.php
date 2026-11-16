@@ -86,16 +86,20 @@
             <div class="form-group">
                 <label for="quantity">{{ $type === 'in' ? 'Barang Diterima' : 'Barang Dikirim' }} <span>*</span></label>
 
-                <input
-                    type="number"
-                    name="quantity"
-                    id="quantity"
-                    min="1"
-                    max="4294967295"
-                    value="{{ old('quantity') }}"
-                    placeholder="Masukkan jumlah produk"
-                    required
-                >
+                <div class="number-stepper" data-number-stepper>
+                    <button type="button" data-number-step="-1" aria-label="Kurangi jumlah">-</button>
+                    <input
+                        type="number"
+                        name="quantity"
+                        id="quantity"
+                        min="1"
+                        max="4294967295"
+                        value="{{ old('quantity') }}"
+                        placeholder="Masukkan jumlah produk"
+                        required
+                    >
+                    <button type="button" data-number-step="1" aria-label="Tambah jumlah">+</button>
+                </div>
 
                 @error('quantity')
                     <small class="text-danger">{{ $message }}</small>

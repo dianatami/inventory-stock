@@ -93,6 +93,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    document.querySelectorAll('[data-number-stepper]').forEach((stepper) => {
+        const input = stepper.querySelector('input[type="number"]');
+        if (!input) return;
+
+        stepper.querySelectorAll('[data-number-step]').forEach((button) => {
+            button.addEventListener('click', () => {
+                if (input.disabled) return;
+
+                const direction = Number(button.dataset.numberStep);
+                if (direction !== -1 && direction !== 1) return;
+
+                const min = input.min === '' ? Number.NEGATIVE_INFINITY : Number(input.min);
+                const max = input.max === '' ? Number.POSITIVE_INFINITY : Number(input.max);
+                const step = input.step === '' || input.step === 'any' ? 1 : Number(input.step);
+                const stepSize = Number.isFinite(step) && step > 0 ? step : 1;
+                const current = input.value === '' ? null : Number(input.value);
+                const next = current === null
+                    ? (Number.isFinite(min) ? min : direction * stepSize)
+                    : current + direction * stepSize;
+
+                input.value = String(Math.min(max, Math.max(min, next)));
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        });
+    });
+
     {
         const root = document.querySelector('[data-notifications]');
         if (root) {

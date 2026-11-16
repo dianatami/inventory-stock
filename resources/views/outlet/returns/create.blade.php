@@ -15,7 +15,13 @@
                 <td>{{ $item->orderItem->product->name }}</td>
                 <td>{{ $item->validated_quantity }} {{ $item->orderItem->product->unit }}</td>
                 <td>{{ $stock?->quantity ?? 0 }}</td>
-                <td><input type="number" name="items[{{ $item->id }}]" min="0" max="{{ min($item->validated_quantity, $stock?->quantity ?? 0) }}" value="0" required></td>
+                <td>
+                    <div class="number-stepper" data-number-stepper>
+                        <button type="button" data-number-step="-1" aria-label="Kurangi jumlah retur">-</button>
+                        <input type="number" name="items[{{ $item->id }}]" min="0" max="{{ min($item->validated_quantity, $stock?->quantity ?? 0) }}" value="0" required>
+                        <button type="button" data-number-step="1" aria-label="Tambah jumlah retur">+</button>
+                    </div>
+                </td>
                 <td>
                     <select name="conditions[{{ $item->id }}]">
                         <option value="">Pilih kondisi</option>

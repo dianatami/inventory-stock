@@ -12,6 +12,20 @@ class StockTransactionTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_stock_transaction_quantity_has_increment_and_decrement_buttons(): void
+    {
+        [$user] = $this->createUserAndProduct(10);
+
+        $this->actingAs($user)
+            ->get(route('stock-in.create'))
+            ->assertOk()
+            ->assertSee('type="number"', false)
+            ->assertSee('data-number-step="-1"', false)
+            ->assertSee('data-number-step="1"', false)
+            ->assertSee('aria-label="Kurangi jumlah"', false)
+            ->assertSee('aria-label="Tambah jumlah"', false);
+    }
+
     public function test_stock_in_updates_product_and_returns_to_stock_in_history(): void
     {
         [$user, $product] = $this->createUserAndProduct(10);

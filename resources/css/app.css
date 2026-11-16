@@ -1098,6 +1098,60 @@ body {
     border-color: var(--primary);
 }
 
+.number-stepper {
+    display: flex;
+    width: min(100%, 360px);
+}
+
+.number-stepper input {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    border-radius: 0;
+    text-align: center;
+}
+
+.number-stepper button {
+    display: grid;
+    flex: 0 0 48px;
+    place-items: center;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: var(--primary);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.number-stepper button:first-child {
+    border-radius: 8px 0 0 8px;
+}
+
+.number-stepper button:last-child {
+    border-radius: 0 8px 8px 0;
+}
+
+.number-stepper button + input,
+.number-stepper input + button {
+    margin-left: -1px;
+}
+
+.number-stepper button:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 2px solid rgb(180 35 24 / 25%);
+    outline-offset: 1px;
+}
+
+.number-stepper input::-webkit-inner-spin-button,
+.number-stepper input::-webkit-outer-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+}
+
+.number-stepper input[type="number"] {
+    -moz-appearance: textfield;
+}
+
 .form-group textarea {
     resize: vertical;
 }
@@ -2878,6 +2932,16 @@ table.table td {
     background: #fff;
 }
 
+.outlet-table .number-stepper {
+    min-width: 144px;
+    width: 100%;
+}
+
+.outlet-table .number-stepper input {
+    width: auto;
+    border-radius: 0;
+}
+
 .outlet-table input:focus,
 .outlet-table select:focus,
 .outlet-form input:focus,
@@ -3469,6 +3533,11 @@ table.table tbody tr:hover td,
 .notification-center .notification-card-actions form {
     padding-left: 15px;
     border-left: 1px solid #e8e9f0;
+}
+
+.notification-center .notification-card-actions.is-read-only form {
+    padding-left: 0;
+    border-left: 0;
 }
 
 .notification-center .notification-summary-column {

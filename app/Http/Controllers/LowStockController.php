@@ -15,7 +15,7 @@ class LowStockController extends Controller
 {
     private function canViewStock(Request $request): bool
     {
-        return in_array($request->user()->role, ['Manager', 'Admin Prolog'], true);
+        return in_array($request->user()->role, ['Manager', 'Admin Prolog', 'Kepala Logistik'], true);
     }
 
     private function visibleSystemNotifications(Request $request)
@@ -87,7 +87,7 @@ class LowStockController extends Controller
         }
 
         $stockItems = $stockQuery->latest('notified_at')->latest('id')->get()
-            ->map(fn (LowStockNotification $notification) => $this->stockItem($notification));
+            ->map(fn (LowStockNotification $notification) => $this->stockItem($notification, $request->user()->role));
         $activityItems = $systemQuery->latest()->get()
             ->map(fn (SystemNotification $notification) => $this->activityItem($notification));
         $allItems = $stockItems->concat($activityItems)->sortByDesc('timestamp')->values();
@@ -145,7 +145,7 @@ class LowStockController extends Controller
                 ->latest('id')
                 ->limit(20)
                 ->get()
-                ->map(fn (LowStockNotification $notification) => $this->stockItem($notification))
+                ->map(fn (LowStockNotification $notification) => $this->stockItem($notification, $request->user()->role))
             : collect();
         $activityItems = $this->visibleSystemNotifications($request)
             ->latest()
@@ -195,10 +195,13 @@ class LowStockController extends Controller
         return response()->noContent();
     }
 
-    private function stockItem(LowStockNotification $notification): array
+    private function stockItem(LowStockNotification $notification, string $role): array
     {
         $productName = $notification->product->name;
         $severity = $notification->severity;
+        $actionUrl = in_array($role, ['Admin Prolog', 'Kepala Logistik'], true)
+            ? route('logistics-requests.index')
+            : null;
         $title = match ($severity) {
             'out' => 'Stok '.$productName.' telah habis',
             'critical' => 'Stok '.$productName.' tersisa '.$notification->current_stock.' pcs',
@@ -238,8 +241,8 @@ class LowStockController extends Controller
             'created_at' => $notification->notified_at->locale('id')->translatedFormat('d M Y H:i'),
             'timestamp' => $notification->notified_at->timestamp,
             'read' => $notification->read_at !== null,
-            'action_url' => route('stock-mutations.index', ['search' => $notification->product->code]),
-            'action_label' => 'Cek stok',
+            'action_url' => $actionUrl,
+            'action_label' => $actionUrl ? 'Buka permintaan barang' : null,
             'read_url' => route('notifications.read', $notification),
             'read_method' => 'PATCH',
         ];

@@ -134,7 +134,7 @@
                     <h3>Alarm Stok Gudang</h3>
                     <p>Pemberitahuan aktif saat stok mencapai atau berada di bawah batas minimum.</p>
                 </div>
-                <a href="{{ route('notifications.low-stock') }}" class="section-link">Lihat semua</a>
+                <a href="{{ in_array($role, ['Admin Prolog', 'Kepala Logistik'], true) ? route('logistics-requests.index') : route('notifications.low-stock') }}" class="section-link">Lihat semua</a>
             </div>
             <div class="table-responsive">
                 <table class="table">
@@ -201,7 +201,7 @@
                     <h3>Notifikasi Stok Gudang Menipis</h3>
                     <p><strong>{{ $metrics['low_stock'] }} produk</strong> berada pada atau di bawah batas minimum.</p>
                 </div>
-                <a href="{{ route('notifications.low-stock') }}" class="section-link">Tindak lanjuti</a>
+                <a href="{{ in_array($role, ['Admin Prolog', 'Kepala Logistik'], true) ? route('logistics-requests.index') : route('notifications.low-stock') }}" class="section-link">Tindak lanjuti</a>
             </div>
             @if ($metrics['low_stock'] > 0)
                 <div class="dashboard-low-stock-warning" role="alert">

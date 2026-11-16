@@ -87,16 +87,20 @@
                                 @endif
                                 <span class="notification-read-state">{{ $notification['read'] ? 'Sudah dibaca' : 'Belum dibaca' }}</span>
                             </div>
-                            <div class="notification-card-actions">
-                                <a href="{{ $notification['action_url'] }}">{{ $notification['action_label'] }} <svg class="interface-icon" aria-hidden="true"><use href="#icon-arrow-right"/></svg></a>
-                                @unless ($notification['read'])
-                                    <form method="POST" action="{{ $readUrl }}">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit">Tandai Dibaca</button>
-                                    </form>
-                                @endunless
-                            </div>
+                            @if ($notification['action_url'] || ! $notification['read'])
+                                <div class="notification-card-actions {{ $notification['action_url'] ? '' : 'is-read-only' }}">
+                                    @if ($notification['action_url'])
+                                        <a href="{{ $notification['action_url'] }}">{{ $notification['action_label'] }} <svg class="interface-icon" aria-hidden="true"><use href="#icon-arrow-right"/></svg></a>
+                                    @endif
+                                    @unless ($notification['read'])
+                                        <form method="POST" action="{{ $readUrl }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit">Tandai Dibaca</button>
+                                        </form>
+                                    @endunless
+                                </div>
+                            @endif
                         </div>
                     </article>
                 @empty

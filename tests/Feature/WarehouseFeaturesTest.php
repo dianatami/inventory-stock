@@ -193,6 +193,48 @@ class WarehouseFeaturesTest extends TestCase
         $this->assertDatabaseCount('low_stock_notifications', 2);
     }
 
+    public function test_stock_notifications_link_to_logistics_requests_only_for_warehouse_roles(): void
+    {
+        [$manager, $product] = $this->createManagerAndProduct(4);
+        $requestUrl = route('logistics-requests.index');
+
+        $this->actingAs($manager)
+            ->getJson(route('notifications.feed'))
+            ->assertOk()
+            ->assertJsonPath('items.0.category', 'stock_low')
+            ->assertJsonPath('items.0.action_url', null);
+
+        $this->get(route('notifications.low-stock'))
+            ->assertOk()
+            ->assertSee('Tandai Dibaca')
+            ->assertDontSee('Buka permintaan barang');
+
+        $admin = User::factory()->create([
+            'username' => 'admin-stock-notification',
+            'role' => 'Admin Prolog',
+            'is_active' => true,
+        ]);
+        $this->actingAs($admin)
+            ->getJson(route('notifications.feed'))
+            ->assertOk()
+            ->assertJsonPath('items.0.action_url', $requestUrl);
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('href="'.$requestUrl.'"', false);
+
+        $product->update(['stock' => 0]);
+        $head = User::factory()->create([
+            'username' => 'head-stock-notification',
+            'role' => 'Kepala Logistik',
+            'is_active' => true,
+        ]);
+        $this->actingAs($head)
+            ->getJson(route('notifications.feed'))
+            ->assertOk()
+            ->assertJsonPath('items.0.severity', 'out')
+            ->assertJsonPath('items.0.action_url', $requestUrl);
+    }
+
     public function test_scheduled_stock_sync_command_creates_low_stock_notifications(): void
     {
         [, $product] = $this->createManagerAndProduct(4);

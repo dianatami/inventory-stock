@@ -9,7 +9,17 @@
         <div class="outlet-table-wrap"><table class="outlet-table"><thead><tr><th>Produk</th><th>Stok outlet tercatat</th><th>Stok akhir fisik</th></tr></thead><tbody>
         @forelse ($products as $product)
             @php($stock = $product->outletStocks->first())
-            <tr><td>{{ $product->name }} <span class="outlet-muted">({{ $product->unit }})</span></td><td>{{ $stock?->quantity ?? 0 }}</td><td><input type="number" name="items[{{ $product->id }}]" min="0" max="4294967295" value="{{ old('items.'.$product->id, $stock?->quantity ?? 0) }}" required></td></tr>
+            <tr>
+                <td>{{ $product->name }} <span class="outlet-muted">({{ $product->unit }})</span></td>
+                <td>{{ $stock?->quantity ?? 0 }}</td>
+                <td>
+                    <div class="number-stepper" data-number-stepper>
+                        <button type="button" data-number-step="-1" aria-label="Kurangi stok akhir fisik">-</button>
+                        <input type="number" name="items[{{ $product->id }}]" min="0" max="4294967295" value="{{ old('items.'.$product->id, $stock?->quantity ?? 0) }}" required>
+                        <button type="button" data-number-step="1" aria-label="Tambah stok akhir fisik">+</button>
+                    </div>
+                </td>
+            </tr>
         @empty<tr><td colspan="3" class="outlet-empty">Tidak ada produk aktif.</td>@endforelse
         </tbody></table></div>
         <div class="outlet-field"><label for="notes">Catatan selisih / pemeriksaan (opsional)</label><textarea id="notes" name="notes" rows="2">{{ old('notes') }}</textarea></div>
